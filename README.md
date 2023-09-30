@@ -54,3 +54,5 @@ The score becomming -214783648 is caused by integer overflow, as Synthesia isn't
 When the number exceeds the maximum value allowed by this variable type, in this case Synthesia uses double, then it loops back to the begining, in other words the smallest number allowed by this variable type, which makes the score becomes -214783648. 
 
 If anyone knows how to let Synthesia be able to handle larger values of score, contributions are welcome!
+
+Also note that if you MIDI contains overlapping notes within a single track, the combo may be calculated incorrectly. 
