@@ -47,3 +47,10 @@ We want all tracks to be shown by default, so I changed that.
 Also, I added autoplay to Synthesia. It will treat all inputs as perfect if no midi input device is selected. 
 
 **Hope you like my work    : )**
+
+### A quick note: 
+The score becomming -214783648 is caused by integer overflow, as Synthesia isn't made to be playing MIDIs with that large amount of notes. 
+
+When the number exceeds the maximum value allowed by this variable type, in this case Synthesia uses double, then it loops back to the begining, in other words the smallest number allowed by this variable type, which makes the score becomes -214783648. 
+
+If anyone knows how to let Synthesia be able to handle larger values of score, contributions are welcome!
