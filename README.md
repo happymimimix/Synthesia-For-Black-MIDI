@@ -1,7 +1,5 @@
 # Synthesia For Black MIDI
-
 **Forked from Synthesia 0.6.1b**
-
 
 **Made by: Khangaroo & Happy_mimimix**
 
@@ -45,4 +43,4 @@ We want all tracks to be shown by default, so I changed that.
 
 Also, I added autoplay to Synthesia. It will treat all inputs as perfect if no midi input device is selected. 
 
-**Hope you like my work.   : )**
+**Hope you like my work    : )**
