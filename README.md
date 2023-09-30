@@ -12,7 +12,7 @@ Mainly because it's 32bit and supports only up to 88 keys.
 
 The worst thing is that Synthesia is close sourced, which makes modifying it impossible. 
 
-However, you may not notice but Synthesia WAS open sourced long ago! 
+However, you may not've noticed that Synthesia WAS open sourced long ago! 
 
 The last open sourced version is 0.6.1b. After that, it became close sourced and commersial. 
 
@@ -20,14 +20,17 @@ So, lets begin from here.
 
 Khangaroo downloaded the old source code and begins to make a 64 bit build. 
 
+She also made some impovements on the performance of the software, it can now open large midi files much faster than ever before. 
+
 Then, she made the keyboard support up to 128 keys! Wonderful. 
 
 I was amazed by Khangaroo's creation. 
-Although the process is simple, but her ability on to be able to think of doing this is insane! 
+
+Although the process is simple, but her ability on being able to think of the idea of doing this is insane! 
 
 It feels so good when something that used to be proven impossible has become POSSIBLE! 
 
-However, Khangaroo's creation was amazing, but not amazing enough. 
+Khangaroo's creation was amazing, but not amazing enough. 
 
 I spot plenty of space for imporvement and decided to fill that up. 
 
