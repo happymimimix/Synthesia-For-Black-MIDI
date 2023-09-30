@@ -3,6 +3,9 @@
 
 **Made by: Khangaroo & Happy_mimimix**
 
+## Demo video: 
+https://youtu.be/QKMZrueUUu8
+
 ## What is this
 It's Synthesia, but 128keys + 64bit + Autoplay!
 
