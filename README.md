@@ -55,4 +55,4 @@ When the number exceeds the maximum value allowed by this variable type, in this
 
 If anyone knows how to let Synthesia be able to handle larger values of score, contributions are welcome!
 
-Also note that if you MIDI contains overlapping notes within a single track, the combo may be calculated incorrectly. 
+Also note that if your MIDI contains overlapping notes within a single track, the combo may be calculated incorrectly. 
