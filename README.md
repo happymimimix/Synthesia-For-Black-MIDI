@@ -31,3 +31,12 @@ However, Khangaroo's creation was amazing, but not amazing enough.
 
 I spot plenty of space for imporvement and decided to fill that up. 
 
+First of all, synthesia hides all percussion tracks on default, which we don't want. 
+
+If you wanna change this, you have to click on hidden tracks one by one to change it's statues, because synthesia back then does not have the bulk edit function. 
+
+We want all tracks to be shown by default, so I changed that. 
+
+Also, I added autoplay to Synthesia. It will treat all inputs as perfect if no midi input device is selected. 
+
+**Hope you like my work. : )**
