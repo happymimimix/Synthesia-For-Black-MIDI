@@ -326,8 +326,6 @@ void Midi::TranslateNotes(const NoteSet& notes, unsigned short pulses_per_quarte
     }
 }
 
-
-
 MidiEventListWithTrackId Midi::Update(microseconds_t delta_microseconds)
 {
    MidiEventListWithTrackId aggregated_events;
