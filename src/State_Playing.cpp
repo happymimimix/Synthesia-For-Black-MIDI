@@ -152,10 +152,10 @@ void PlayingState::Play(microseconds_t delta_microseconds)
       bool play = false;
       switch (m_state.track_properties[track_id].mode)
       {
-      case Track::ModeNotPlayed:           draw = false;  play = false;  break;
-      case Track::ModePlayedButHidden:     draw = false;  play = true;   break;
-      case Track::ModeYouPlay:             draw = false;  play = false;  break;
-      case Track::ModePlayedAutomatically: draw = true;   play = true;   break;
+      case Track::ModeNotPlayed:           draw = false;            play = false;            break;
+      case Track::ModePlayedButHidden:     draw = false;            play = true;             break;
+      case Track::ModeYouPlay:             draw = !m_state.midi_in; play = !m_state.midi_in; break;
+      case Track::ModePlayedAutomatically: draw = true;             play = true;             break;
       }
 
       // Even in "You Play" tracks, we have to play the non-note
@@ -359,36 +359,36 @@ void PlayingState::Update()
 
       if (note->end < cur_time && window_end < cur_time)
       {
-          if (m_state.midi_in) {
-              if (note->state == UserMissed)
-              {
-                  // They missed a note, reset the combo counter
-                  m_current_combo = 0;
-                  m_state.stats.notes_user_could_have_played++;
-                  m_state.stats.speed_integral += m_state.song_speed;
-              }
-          }
+         if (m_state.midi_in) {
+            if (note->state == UserMissed)
+            {
+                // They missed a note, reset the combo counter
+                m_current_combo = 0;
+                m_state.stats.notes_user_could_have_played++;
+                m_state.stats.speed_integral += m_state.song_speed;
+            }
+         }
          else {
-             const static double NoteValue = 100.0;
-             m_state.stats.score += NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
+            const static double NoteValue = 100.0;
+            m_state.stats.score += NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
 
-             m_state.stats.notes_user_could_have_played++;
-             m_state.stats.speed_integral += m_state.song_speed;
+            m_state.stats.notes_user_could_have_played++;
+            m_state.stats.speed_integral += m_state.song_speed;
 
-             m_state.stats.notes_user_actually_played++;
-             m_current_combo++;
-             m_state.stats.longest_combo = max(m_current_combo, m_state.stats.longest_combo);
+            m_state.stats.notes_user_actually_played++;
+            m_current_combo++;
+            m_state.stats.longest_combo = max(m_current_combo, m_state.stats.longest_combo);
              
-             TranslatedNote note_copy = *note;
-             note_copy.state = UserHit;
+            TranslatedNote note_copy = *note;
+            note_copy.state = UserHit;
 
-             m_notes.erase(note);
-             m_notes.insert(note_copy);
+            m_notes.erase(note);
+            m_notes.insert(note_copy);
 
-             // Re-connect the (now-invalid) iterator to the replacement
-             note = m_notes.find(note_copy);
+            // Re-connect the (now-invalid) iterator to the replacement
+            note = m_notes.find(note_copy);
 
-             m_state.stats.total_notes_user_pressed++;
+            m_state.stats.total_notes_user_pressed++;
          }
          m_notes.erase(note);
       }
@@ -413,13 +413,13 @@ void PlayingState::Update()
    if (IsKeyPressed(KeyLeft))
    {
       m_state.song_speed -= 10;
-      if (m_state.song_speed < 0) m_state.song_speed = 0;
+      if (m_state.song_speed < 10) m_state.song_speed = 10;
    }
 
    if (IsKeyPressed(KeyRight))
    {
       m_state.song_speed += 10;
-      if (m_state.song_speed > 400) m_state.song_speed = 400;
+      if (m_state.song_speed > 1000) m_state.song_speed = 1000;
    }
 
    if (IsKeyPressed(KeySpace))

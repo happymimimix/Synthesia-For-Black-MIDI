@@ -109,7 +109,7 @@ void DeviceTile::Draw(Renderer &renderer) const
          switch (m_tile_type)
          {
          case DeviceTileOutput: mode << L"[Output Off: Display only with no audio]"; break;
-         case DeviceTileInput:  mode << L"[Input Off: Play along with no scoring]";  break;
+         case DeviceTileInput:  mode << L"[Input Off: Watch synthesia play for you automatically]";  break;
          }
       }
    }

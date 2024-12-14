@@ -14,66 +14,56 @@
 
 using namespace std;
 
-MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
+MidiTrack MidiTrack::ReadFromStream(std::istream& stream)
 {
-   // Verify the track header
-   const static string MidiTrackHeader = "MTrk";
+    const static std::string MidiTrackHeader = "MTrk";
+    char header_id[5] = { 0, 0, 0, 0, 0 };
+    unsigned long track_length = 0;
 
-   // I could use (MidiTrackHeader.length() + 1), but then this has to be
-   // dynamically allocated.  More hassle than it's worth.  MIDI is well
-   // defined and will always have a 4-byte header.  We use 5 so we get
-   // free null termination.
-   char header_id[5] = { 0, 0, 0, 0, 0 };
-   unsigned long track_length;
+    stream.read(header_id, MidiTrackHeader.length());
+    if (stream.fail() || std::string(header_id) != MidiTrackHeader)
+    {
+        throw MidiError(MidiError_BadTrackHeaderType);
+    }
 
-   stream.read(header_id, static_cast<streamsize>(MidiTrackHeader.length()));
-   stream.read(reinterpret_cast<char*>(&track_length), sizeof(unsigned long));
+    stream.read(reinterpret_cast<char*>(&track_length), sizeof(unsigned long));
+    if (stream.fail())
+    {
+        throw MidiError(MidiError_TrackHeaderTooShort);
+    }
 
-   if (stream.fail()) throw MidiError(MidiError_TrackHeaderTooShort);
+    track_length = BigToSystem32(track_length);
 
-   string header(header_id);
-   if (header != MidiTrackHeader) throw MidiError_BadTrackHeaderType;
+    std::vector<char> buffer(track_length);
+    stream.read(buffer.data(), track_length);
 
-   // Pull the full track out of the file all at once -- there is an
-   // End-Of-Track event, but this allows us handle malformed MIDI a
-   // little more gracefully.
-   track_length = BigToSystem32(track_length);
-   char *buffer = new char[track_length + 1];
-   buffer[track_length] = 0;
+    if (stream.fail())
+    {
+        throw MidiError(MidiError_TrackTooShort);
+    }
 
-   stream.read(buffer, track_length);
-   if (stream.fail())
-   {
-      delete[] buffer;
-      throw MidiError(MidiError_TrackTooShort);
-   }
+    // Use stringstream for binary data processing
+    std::istringstream event_stream(std::string(buffer.begin(), buffer.end()), std::ios::binary);
 
-   // We have to jump through a couple hoops because istringstream
-   // can't handle binary data unless constructed through an std::string. 
-   string buffer_string(buffer, track_length);
-   istringstream event_stream(buffer_string, ios::binary);
-   delete[] buffer;
+    MidiTrack t;
 
-   MidiTrack t;
+    char last_status = 0;
+    unsigned long current_pulse_count = 0;
+    while (event_stream.peek() != EOF)
+    {
+        MidiEvent ev = MidiEvent::ReadFromStream(event_stream, last_status);
+        last_status = ev.StatusCode();
 
-   // Read events until we run out of track
-   char last_status = 0;
-   unsigned long current_pulse_count = 0;
-   while (event_stream.peek() != char_traits<char>::eof())
-   {
-      MidiEvent ev = MidiEvent::ReadFromStream(event_stream, last_status); 
-      last_status = ev.StatusCode();
-      
-      t.m_events.push_back(ev);
+        t.m_events.push_back(std::move(ev)); // This line uses a lot of cpu according to profiler
 
-      current_pulse_count += ev.GetDeltaPulses();
-      t.m_event_pulses.push_back(current_pulse_count);
-   }
+        current_pulse_count += ev.GetDeltaPulses();
+        t.m_event_pulses.push_back(current_pulse_count);
+    }
 
-   t.BuildNoteSet();
-   t.DiscoverInstrument();
+    t.BuildNoteSet();
+    t.DiscoverInstrument();
 
-   return t;
+    return t;
 }
 
 struct NoteInfo
@@ -169,8 +159,8 @@ void MidiTrack::DiscoverInstrument()
       const MidiEvent &ev = m_events[i];
       if (ev.Type() != MidiEventType_NoteOn) continue;
 
-      if (ev.Channel() == 10) any_note_uses_percussion = true;
-      if (ev.Channel() != 10) any_note_does_not_use_percussion = true;
+      if (ev.Channel() == 9) any_note_uses_percussion = true;
+      if (ev.Channel() != 9) any_note_does_not_use_percussion = true;
    }
 
    if (any_note_uses_percussion && !any_note_does_not_use_percussion)
