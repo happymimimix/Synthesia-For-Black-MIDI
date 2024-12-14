@@ -37,7 +37,7 @@ void PlayingState::SetupNoteState()
       TranslatedNote n = *i;
 
       n.state = AutoPlayed;
-      if (m_state.track_properties[n.track_id].mode == Track::ModeYouPlay || !m_state.midi_in) n.state = UserPlayable;
+      if (m_state.track_properties[n.track_id].mode == Track::ModeYouPlay || (!m_state.midi_in && m_state.track_properties[n.track_id].mode == Track::ModePlayedAutomatically)) n.state = UserPlayable;
       
       m_notes.insert(n);
    }
@@ -103,7 +103,7 @@ if (m_state.framedump) {
    m_look_ahead_you_play_note_count = 0;
    for (size_t i = 0; i < m_state.track_properties.size(); ++i)
    {
-      if (m_state.track_properties[i].mode == Track::ModeYouPlay || !m_state.midi_in)
+      if (m_state.track_properties[i].mode == Track::ModeYouPlay || (!m_state.midi_in && m_state.track_properties[i].mode == Track::ModePlayedAutomatically))
       {
          m_look_ahead_you_play_note_count += m_state.midi->Tracks()[i].Notes().size();
          m_any_you_play_tracks = true;
@@ -368,7 +368,7 @@ void PlayingState::Update()
                 m_state.stats.speed_integral += m_state.song_speed;
             }
          }
-         else {
+         else if (i->state == UserPlayable) {
             const static double NoteValue = 100.0;
             m_state.stats.score += NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
 
