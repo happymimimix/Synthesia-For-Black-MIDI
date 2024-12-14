@@ -53,6 +53,10 @@ The score becomming -214783648 is caused by integer overflow, as Synthesia isn't
 
 When the number exceeds the maximum value allowed by this variable type, in this case Synthesia uses double, then it loops back to the begining, in other words the smallest number allowed by this variable type, which makes the score becomes -214783648. 
 
+### Source code? 
+
 SFBM is close sourced because I accidentally lost the source code... 
 
 Sorry. 
+
+#### Update 2024/12/14: I found it! 
