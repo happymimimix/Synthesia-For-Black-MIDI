@@ -152,10 +152,10 @@ void PlayingState::Play(microseconds_t delta_microseconds)
       bool play = false;
       switch (m_state.track_properties[track_id].mode)
       {
-      case Track::ModeNotPlayed:           draw = false;  play = false;  break;
-      case Track::ModePlayedButHidden:     draw = false;  play = true;   break;
-      case Track::ModeYouPlay:             draw = false;  play = false;  break;
-      case Track::ModePlayedAutomatically: draw = true;   play = true;   break;
+      case Track::ModeNotPlayed:           draw = false;            play = false;            break;
+      case Track::ModePlayedButHidden:     draw = false;            play = true;             break;
+      case Track::ModeYouPlay:             draw = !m_state.midi_in; play = !m_state.midi_in; break;
+      case Track::ModePlayedAutomatically: draw = true;             play = true;             break;
       }
 
       // Even in "You Play" tracks, we have to play the non-note
@@ -413,13 +413,13 @@ void PlayingState::Update()
    if (IsKeyPressed(KeyLeft))
    {
       m_state.song_speed -= 10;
-      if (m_state.song_speed < 0) m_state.song_speed = 0;
+      if (m_state.song_speed < 10) m_state.song_speed = 10;
    }
 
    if (IsKeyPressed(KeyRight))
    {
       m_state.song_speed += 10;
-      if (m_state.song_speed > 400) m_state.song_speed = 400;
+      if (m_state.song_speed > 1000) m_state.song_speed = 1000;
    }
 
    if (IsKeyPressed(KeySpace))

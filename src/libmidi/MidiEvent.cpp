@@ -9,37 +9,34 @@
 #include "../string_util.h"
 using namespace std;
 
-MidiEvent MidiEvent::ReadFromStream(istream &stream, unsigned char last_status, bool contains_delta_pulses)
+MidiEvent MidiEvent::ReadFromStream(std::istream& stream, unsigned char last_status, bool contains_delta_pulses)
 {
-   MidiEvent ev;
+    MidiEvent ev;
 
-   if (contains_delta_pulses) ev.m_delta_pulses = parse_variable_length(stream);
-   else ev.m_delta_pulses = 0;
+    if (contains_delta_pulses) {
+        ev.m_delta_pulses = parse_variable_length(stream);
+    }
+    else {
+        ev.m_delta_pulses = 0;
+    }
 
-   // MIDI uses a compression mechanism called "running status".
-   // Anytime you read a status byte that doesn't have the highest-
-   // order bit set, what you actually read is the 1st data byte
-   // of a message with the status of the previous message.
-   ev.m_status = static_cast<unsigned char>(stream.peek());
-   if ((ev.m_status & 0x80) == 0)
-   {
-      ev.m_status = last_status;
-   }
-   else
-   {
-      // It was a status byte after all, just read past it
-      // in the stream
-      stream.read(reinterpret_cast<char*>(&ev.m_status), sizeof(unsigned char));
-   }
+    // Read the status byte
+    ev.m_status = static_cast<unsigned char>(stream.peek());
+    if ((ev.m_status & 0x80) == 0) {
+        ev.m_status = last_status;
+    }
+    else {
+        stream.read(reinterpret_cast<char*>(&ev.m_status), sizeof(unsigned char));
+    }
 
-   switch (ev.Type())
-   {
-   case MidiEventType_Meta:  ev.ReadMeta(stream);      break;
-   case MidiEventType_SysEx: ev.ReadSysEx(stream);     break;
-   default:                  ev.ReadStandard(stream);  break;
-   }
+    // Read the event based on its type
+    switch (ev.Type()) {
+    case MidiEventType_Meta:  ev.ReadMeta(stream);      break;
+    case MidiEventType_SysEx: ev.ReadSysEx(stream);     break;
+    default:                  ev.ReadStandard(stream);  break;
+    }
 
-   return ev;
+    return ev;
 }
 
 MidiEvent MidiEvent::Build(const MidiEventSimple &simple)
@@ -65,111 +62,97 @@ MidiEvent MidiEvent::NullEvent()
    return ev;
 }
 
-void MidiEvent::ReadMeta(std::istream &stream)
+void MidiEvent::ReadMeta(std::istream& stream)
 {
-   stream.read(reinterpret_cast<char*>(&m_meta_type), sizeof(unsigned char));
-   unsigned long meta_length = parse_variable_length(stream);
+    stream.read(reinterpret_cast<char*>(&m_meta_type), sizeof(unsigned char));
+    unsigned long meta_length = parse_variable_length(stream);
 
-   char *buffer = new char[meta_length + 1];
-   buffer[meta_length] = 0;
+    char* buffer = new char[meta_length + 1];
+    buffer[meta_length] = 0;
 
-   stream.read(buffer, meta_length);
-   if (stream.fail())
-   {
-      delete[] buffer;
-      throw MidiError(MidiError_EventTooShort);
-   }
+    stream.read(buffer, meta_length);
+    if (stream.fail())
+    {
+        delete[] buffer;
+        throw MidiError(MidiError_EventTooShort);
+    }
 
-   switch (m_meta_type)
-   {
-   case MidiMetaEvent_Text:
-   case MidiMetaEvent_Copyright:
-   case MidiMetaEvent_TrackName:
-   case MidiMetaEvent_Instrument:
-   case MidiMetaEvent_Lyric:
-   case MidiMetaEvent_Marker:
-   case MidiMetaEvent_Cue:
-   case MidiMetaEvent_PatchName:
-   case MidiMetaEvent_DeviceName:
-      m_text = string(buffer, meta_length);
-      break;
+    switch (m_meta_type)
+    {
+    case MidiMetaEvent_Text:
+    case MidiMetaEvent_Copyright:
+    case MidiMetaEvent_TrackName:
+    case MidiMetaEvent_Instrument:
+    case MidiMetaEvent_Lyric:
+    case MidiMetaEvent_Marker:
+    case MidiMetaEvent_Cue:
+    case MidiMetaEvent_PatchName:
+    case MidiMetaEvent_DeviceName:
+        m_text = string(buffer, meta_length);
+        break;
 
-   case MidiMetaEvent_TempoChange:
-      {
-         if (meta_length < 3) throw MidiError(MidiError_EventTooShort);
+    case MidiMetaEvent_TempoChange:
+    {
+        if (meta_length < 3) throw MidiError(MidiError_EventTooShort);
 
-         // We have to convert to unsigned char first for some reason or the
-         // conversion gets all wacky and tries to look at more than just its
-         // one byte at a time.
-         unsigned int b0 = static_cast<unsigned char>(buffer[0]);
-         unsigned int b1 = static_cast<unsigned char>(buffer[1]);
-         unsigned int b2 = static_cast<unsigned char>(buffer[2]);
-         m_tempo_uspqn = (b0 << 16) + (b1 << 8) + b2;
-      }
-      break;
+        // We have to convert to unsigned char first for some reason or the
+        // conversion gets all wacky and tries to look at more than just its
+        // one byte at a time.
+        unsigned int b0 = static_cast<unsigned char>(buffer[0]);
+        unsigned int b1 = static_cast<unsigned char>(buffer[1]);
+        unsigned int b2 = static_cast<unsigned char>(buffer[2]);
+        m_tempo_uspqn = (b0 << 16) + (b1 << 8) + b2;
+    }
+    break;
 
+    // Add a case to handle unknown meta event types
+    default:
+    {
+        // Log or handle the unknown meta event type
+        // For example:
+        std::cerr << "Warning: Unknown Meta Event Type: " << static_cast<int>(m_meta_type) << std::endl;
+        // Optionally, you can throw an error if unknown meta events are critical for your application
+        // throw MidiError(MidiError_UnknownMetaEventType);
+    }
+    break;
+    }
 
-   case MidiMetaEvent_SequenceNumber:
-   case MidiMetaEvent_EndOfTrack:
-   case MidiMetaEvent_SMPTEOffset:
-   case MidiMetaEvent_TimeSignature:
-   case MidiMetaEvent_KeySignature:
-   case MidiMetaEvent_Proprietary:
-
-   case MidiMetaEvent_ChannelPrefix:
-   case MidiMetaEvent_MidiPort:
-      // NOTE: We would have to keep all of this around if we
-      // wanted to reproduce 1:1 MIDIs between file Save/Load
-      break;
-
-   default:
-      {
-         delete[] buffer;
-         throw MidiError(MidiError_UnknownMetaEventType);
-      }
-   }
-
-   delete[] buffer;
+    delete[] buffer;
 }
 
-void MidiEvent::ReadSysEx(std::istream &stream)
-{
-   // NOTE: We would have to keep SysEx events around if we
-   // wanted to reproduce 1:1 MIDIs between file Save/Load
-   unsigned long sys_ex_length = parse_variable_length(stream);
 
-   // Discard
-   char *buffer = new char[sys_ex_length];
-   stream.read(buffer, sys_ex_length);
-   delete[] buffer;
+void MidiEvent::ReadSysEx(std::istream& stream)
+{
+    unsigned long sys_ex_length = parse_variable_length(stream);
+
+    // Skip reading actual data for SysEx events
+    stream.seekg(sys_ex_length, std::ios_base::cur);
+    if (stream.fail()) {
+        throw MidiError(MidiError_EventTooShort);
+    }
 }
 
-void MidiEvent::ReadStandard(std::istream &stream)
+void MidiEvent::ReadStandard(std::istream& stream)
 {
-   switch (Type())
-   {
-   case MidiEventType_NoteOff:
-   case MidiEventType_NoteOn:
-   case MidiEventType_Aftertouch:
-   case MidiEventType_Controller:
-   case MidiEventType_PitchWheel:
-      {
-         stream.read(reinterpret_cast<char*>(&m_data1), sizeof(unsigned char));
-         stream.read(reinterpret_cast<char*>(&m_data2), sizeof(unsigned char));
-      }
-      break;
+    switch (Type()) {
+    case MidiEventType_NoteOff:
+    case MidiEventType_NoteOn:
+    case MidiEventType_Aftertouch:
+    case MidiEventType_Controller:
+    case MidiEventType_PitchWheel:
+        stream.read(reinterpret_cast<char*>(&m_data1), sizeof(unsigned char));
+        stream.read(reinterpret_cast<char*>(&m_data2), sizeof(unsigned char));
+        break;
 
-   case MidiEventType_ProgramChange:
-   case MidiEventType_ChannelPressure:
-      {
-         stream.read(reinterpret_cast<char*>(&m_data1), sizeof(unsigned char));
-         m_data2 = 0;
-      }
-      break;
+    case MidiEventType_ProgramChange:
+    case MidiEventType_ChannelPressure:
+        stream.read(reinterpret_cast<char*>(&m_data1), sizeof(unsigned char));
+        m_data2 = 0;
+        break;
 
-   default:
-      throw MidiError(MidiError_UnknownEventType);
-   }
+    default:
+        throw MidiError(MidiError_UnknownEventType);
+    }
 }
 
 bool MidiEvent::GetSimpleEvent(MidiEventSimple *simple) const
