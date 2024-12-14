@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{39F61D85-03F7-4874-A767-2675F4CD1545}</ProjectGuid>
+    <RootNamespace>Synthesia</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>16.0.30028.132</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>WINDOWED;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>glu32.lib;winmm.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <AllowIsolation>false</AllowIsolation>
+      <EnableUAC>false</EnableUAC>
+      <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
+      <UACUIAccess>true</UACUIAccess>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\CompatibleSystem.cpp" />
+    <ClCompile Include="src\DeviceTile.cpp" />
+    <ClCompile Include="src\file_selector.cpp" />
+    <ClCompile Include="src\FramedumpTile.cpp" />
+    <ClCompile Include="src\GameState.cpp" />
+    <ClCompile Include="src\KeyboardDisplay.cpp" />
+    <ClCompile Include="src\libmidi\Midi.cpp" />
+    <ClCompile Include="src\libmidi\MidiComm.cpp" />
+    <ClCompile Include="src\libmidi\MidiEvent.cpp" />
+    <ClCompile Include="src\libmidi\MidiTrack.cpp" />
+    <ClCompile Include="src\libmidi\MidiUtil.cpp" />
+    <ClCompile Include="src\libmidi\SynthVolume.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\MenuLayout.cpp" />
+    <ClCompile Include="src\PianoGameError.cpp" />
+    <ClCompile Include="src\registry.cpp" />
+    <ClCompile Include="src\Renderer.cpp" />
+    <ClCompile Include="src\State_Playing.cpp" />
+    <ClCompile Include="src\State_Stats.cpp" />
+    <ClCompile Include="src\State_Title.cpp" />
+    <ClCompile Include="src\State_TrackSelection.cpp" />
+    <ClCompile Include="src\StringTile.cpp" />
+    <ClCompile Include="src\TextWriter.cpp" />
+    <ClCompile Include="src\Tga.cpp" />
+    <ClCompile Include="src\TrackTile.cpp" />
+    <ClCompile Include="src\UserSettings.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\CompatibleSystem.h" />
+    <ClInclude Include="src\DeviceTile.h" />
+    <ClInclude Include="src\file_selector.h" />
+    <ClInclude Include="src\FrameCounter.h" />
+    <ClInclude Include="src\FramedumpTile.h" />
+    <ClInclude Include="src\GameState.h" />
+    <ClInclude Include="src\KeyboardDisplay.h" />
+    <ClInclude Include="src\libmidi\Midi.h" />
+    <ClInclude Include="src\libmidi\MidiComm.h" />
+    <ClInclude Include="src\libmidi\MidiEvent.h" />
+    <ClInclude Include="src\libmidi\MidiTrack.h" />
+    <ClInclude Include="src\libmidi\MidiTypes.h" />
+    <ClInclude Include="src\libmidi\MidiUtil.h" />
+    <ClInclude Include="src\libmidi\Note.h" />
+    <ClInclude Include="src\libmidi\SynthVolume.h" />
+    <ClInclude Include="src\MenuLayout.h" />
+    <ClInclude Include="src\os.h" />
+    <ClInclude Include="src\os_graphics.h" />
+    <ClInclude Include="src\PianoGameError.h" />
+    <ClInclude Include="src\registry.h" />
+    <ClInclude Include="src\Renderer.h" />
+    <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\SharedState.h" />
+    <ClInclude Include="src\State_Playing.h" />
+    <ClInclude Include="src\State_Stats.h" />
+    <ClInclude Include="src\State_Title.h" />
+    <ClInclude Include="src\State_TrackSelection.h" />
+    <ClInclude Include="src\StringTile.h" />
+    <ClInclude Include="src\string_util.h" />
+    <ClInclude Include="src\Textures.h" />
+    <ClInclude Include="src\TextWriter.h" />
+    <ClInclude Include="src\Tga.h" />
+    <ClInclude Include="src\TrackProperties.h" />
+    <ClInclude Include="src\TrackTile.h" />
+    <ClInclude Include="src\UserSettings.h" />
+    <ClInclude Include="src\version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="license.txt" />
+    <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="nsis_installer_script.nsi" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\resource.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
