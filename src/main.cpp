@@ -58,12 +58,12 @@ static pascal OSErr OpenEventHandlerProc(const AppleEvent *event, AppleEvent *, 
 
 #endif
 
-static const int WindowWidth = round(static_cast<float>(Compatible::GetDisplayWidth()) / 1.5f);
-static const int WindowHeight = round(static_cast<float>(Compatible::GetDisplayHeight()) / 1.5f);
+int WindowWidth = round(static_cast<float>(Compatible::GetDisplayWidth()) / 1.5f);
+int WindowHeight = round(static_cast<float>(Compatible::GetDisplayHeight()) / 1.5f);
 
 GameStateManager state_manager(WindowWidth, WindowHeight);
 
-const static wstring application_name = L"SFBM v1.5.2";
+const static wstring application_name = L"SFBM v1.5.3";
 const static std::wstring friendly_app_name = WSTRING(L"SFBM " + PianoGameVersionString);
 
 const static wstring error_header1 = L"SFBM detected a";
@@ -101,7 +101,13 @@ int WINAPI WinMain (HINSTANCE instance, HINSTANCE, PSTR, int iCmdShow)
 int main(int argc, char *argv[])
 #endif
 {
-
+   // Ensure the calculated window size is divisable by 2
+   if (WindowWidth % 2) {
+      WindowWidth++;
+   }
+   if (WindowHeight % 2) {
+      WindowHeight++;
+   }
 #ifdef WIN32
    WNDCLASS wndclass;
    wndclass.style         = CS_HREDRAW | CS_VREDRAW;
