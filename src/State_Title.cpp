@@ -113,8 +113,8 @@ void TitleState::Init()
    }
 
    const bool compress_height = (GetStateHeight() < 750);
-   const int initial_y = (compress_height ? 230 : 360);
-   const int each_y = (compress_height ? 94 : 100);
+   const int initial_y = (compress_height ? 110 : 250);
+   const int each_y = (compress_height ? 90 : 100);
 
    m_file_tile = new StringTile((GetStateWidth() - StringTileWidth) / 2, initial_y + each_y*0, GetTexture(SongBox));
    m_file_tile->SetString(m_state.song_title);
