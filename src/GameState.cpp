@@ -57,9 +57,6 @@ void GameState::SetManager(GameStateManager *manager)
    Init();
 }
 
-
-
-
 GameStateManager::~GameStateManager()
 {
    for (std::map<Texture, Tga*>::iterator i = m_textures.begin(); i != m_textures.end(); ++i)
@@ -157,8 +154,6 @@ void GameStateManager::ChangeState(GameState *new_state)
    m_next_state = new_state;
 }
 
-
-
 void GameStateManager::Update(bool skip_this_update)
 {
    // Manager's timer grows constantly
@@ -230,8 +225,22 @@ void GameStateManager::Draw(Renderer &renderer)
    glTranslatef(0.375, 0.375, 0.);
 
    m_current_state->Draw(renderer);
-      TextWriter fps_writer(0, 0, renderer);
-      fps_writer << Text(WSTRING(L"FPS: "), Gray) << Text(WSTRING(std::setprecision(6) << m_fps.GetFramesPerSecond()), White);
+   TextWriter fps_writer(0, 0, renderer);
+   fps_writer << Text(WSTRING(L"FPS: "), Gray) << Text(WSTRING(std::setprecision(6) << m_fps.GetFramesPerSecond()), White);
+   
+   MouseInfo mouse = Mouse();
+   glPushMatrix();
+   glTranslatef(mouse.x, mouse.y, 0);
+   glColor3f(1.0f, 0.0f, 0.0f);
+   glBegin(GL_TRIANGLES);
+   glVertex2f(0, 0);
+   glVertex2f(40, 20);
+   glVertex2f(15, 20);
+   glVertex2f(0, 0);
+   glVertex2f(0, 35);
+   glVertex2f(15, 20);
+   glEnd();
+   glPopMatrix();
 
    glFlush ();
    renderer.SwapBuffers();

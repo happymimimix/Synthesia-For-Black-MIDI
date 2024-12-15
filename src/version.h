@@ -8,6 +8,6 @@
 #include <string>
 
 // See readme.txt for a list of what has changed between versions
-static const std::wstring PianoGameVersionString = L"v1.5.3";
+static const std::wstring PianoGameVersionString = L"v1.5.4";
 
 #endif
