@@ -63,7 +63,7 @@ const static int WindowHeight = Compatible::GetDisplayHeight();
 
 GameStateManager state_manager(WindowWidth, WindowHeight);
 
-const static wstring application_name = L"SFBM v1.5.4";
+const static wstring application_name = L"SFBM v1.6.0";
 const static std::wstring friendly_app_name = WSTRING(L"SFBM " + PianoGameVersionString);
 
 const static wstring error_header1 = L"SFBM detected a";
