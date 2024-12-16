@@ -111,6 +111,8 @@ TextWriter& operator<<(TextWriter& tw, const std::wstring& s);
 TextWriter& operator<<(TextWriter& tw, const int& i);
 TextWriter& operator<<(TextWriter& tw, const unsigned int& i);
 TextWriter& operator<<(TextWriter& tw, const long& l);
+TextWriter& operator<<(TextWriter& tw, const long long& l);
 TextWriter& operator<<(TextWriter& tw, const unsigned long& l);
+TextWriter& operator<<(TextWriter& tw, const unsigned long long& l);
 
 #endif

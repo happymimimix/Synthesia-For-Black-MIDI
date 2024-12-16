@@ -197,8 +197,10 @@ TextWriter& newline(TextWriter& tw)
    return tw.next_line();
 }
 
-TextWriter& operator<<(TextWriter& tw, const std::wstring& s)  { return tw << Text(s, White); }
-TextWriter& operator<<(TextWriter& tw, const int& i)           { return tw << Text(i, White); }
-TextWriter& operator<<(TextWriter& tw, const unsigned int& i)  { return tw << Text(i, White); }
-TextWriter& operator<<(TextWriter& tw, const long& l)          { return tw << Text(l, White); }
-TextWriter& operator<<(TextWriter& tw, const unsigned long& l) { return tw << Text(l, White); }
+TextWriter& operator<<(TextWriter& tw, const std::wstring& s)       { return tw << Text(s, White); }
+TextWriter& operator<<(TextWriter& tw, const int& i)                { return tw << Text(i, White); }
+TextWriter& operator<<(TextWriter& tw, const unsigned int& i)       { return tw << Text(i, White); }
+TextWriter& operator<<(TextWriter& tw, const long& l)               { return tw << Text(l, White); }
+TextWriter& operator<<(TextWriter& tw, const long long& l)          { return tw << Text(l, White); }
+TextWriter& operator<<(TextWriter& tw, const unsigned long& l)      { return tw << Text(l, White); }
+TextWriter& operator<<(TextWriter& tw, const unsigned long long& l) { return tw << Text(l, White); }

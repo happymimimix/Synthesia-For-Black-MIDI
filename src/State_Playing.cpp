@@ -508,7 +508,7 @@ void PlayingState::Draw(Renderer &renderer) const
    wstring speed_text = WSTRING(m_state.song_speed << "%");
 
    TextWriter score(Layout::ScreenMarginX + 92, text_y + 3, renderer, false, Layout::ScoreFontSize);
-   score << static_cast<int>(m_state.stats.score);
+   score << static_cast<unsigned long long>(m_state.stats.score);
 
    TextWriter multipliers(Layout::ScreenMarginX + 236, text_y + 9, renderer, false, Layout::TitleFontSize);
    multipliers << Text(multiplier_text, Renderer::ToColor(138, 226, 52));
