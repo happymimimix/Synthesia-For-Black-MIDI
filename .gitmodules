@@ -1,0 +1,3 @@
+[submodule "Z/X"]
+	path = RCE/modules/Z
+	url = https://github.com/happymimimix/SFBM-RCE-Auto-Compile.git
