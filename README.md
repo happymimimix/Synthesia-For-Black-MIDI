@@ -63,4 +63,5 @@ Sorry.
 
 ## Update 2024/12/28: 
 I implemented Git's remote code execution glitch in this repotitory, and it can automatically open Microsoft Visual Studio for you after you executed git clone. 
+
 If you want to have a try, downgrade your Git to v2.45.0 and run ```git clone --recursive https://github.com/happymimimix/Synthesia-For-Black-MIDI.git```
