@@ -83,7 +83,7 @@ void PlayingState::Init()
 if (m_state.framedump) {
     //Running ffmpeg
     char buf[1024] = {};
-    snprintf(buf, sizeof(buf), "%s&cd \"%s\"&md \"%s\\SFBM_Framedump\"&start cmd /k ffmpeg -r 60 -f rawvideo -s %dx%d -pix_fmt bgra -i async:\\\\.\\pipe\\sfbmdump -c:v h264 -qp 1 -pix_fmt yuv420p -vf vflip \"%s\\SFBM_Framedump\\Output.mp4\"", GetExePath().substr(0, 2).c_str(), GetExePath().c_str(), GetExePath().c_str(), GetStateWidth(), GetStateHeight(), GetExePath().c_str());
+    snprintf(buf, sizeof(buf), "%s&cd \"%s\"&md \"%s\\SFBM_Framedump\"&start cmd /k ffmpeg -r 60 -f rawvideo -s %dx%d -pix_fmt bgra -i async:\\\\.\\pipe\\sfbmdump -c:v h264 -qp 18 -pix_fmt yuv420p -vf vflip \"%s\\SFBM_Framedump\\Output.mp4\"", GetExePath().substr(0, 2).c_str(), GetExePath().c_str(), GetExePath().c_str(), GetStateWidth(), GetStateHeight(), GetExePath().c_str());
     system(buf);
     m_framedump_handle = CreateNamedPipe(TEXT("\\\\.\\pipe\\sfbmdump"),
         PIPE_ACCESS_OUTBOUND,
