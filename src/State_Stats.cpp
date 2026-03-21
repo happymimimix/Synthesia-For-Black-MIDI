@@ -111,7 +111,7 @@ void StatsState::Draw(Renderer &renderer) const
    grade_text << Text(grade, c);
    
    TextWriter score(left, InstructionsY + 112, renderer, false, 28);
-   score << WSTRING(static_cast<int>(s.score));
+   score << WSTRING(static_cast<long>(s.score));
 
    TextWriter speed(left, InstructionsY + 147, renderer, false, 28);
    speed << WSTRING(average_speed << L" %");

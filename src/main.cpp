@@ -63,8 +63,8 @@ const static int WindowHeight = Compatible::GetDisplayHeight();
 
 GameStateManager state_manager(WindowWidth, WindowHeight);
 
-const static wstring application_name = L"SFBM v1.6.1";
-const static std::wstring friendly_app_name = WSTRING(L"SFBM " + PianoGameVersionString);
+const static wstring application_name = L"SFBM";
+const static std::wstring friendly_app_name = WSTRING(L"Synthesia For Black MIDI " + PianoGameVersionString);
 
 const static wstring error_header1 = L"SFBM detected a";
 const static wstring error_header2 = L" problem and must close:\n\n";

@@ -156,7 +156,7 @@ TextWriter& Text::operator<<(TextWriter& tw) const
 
 void Text::calculate_position_and_advance_cursor(TextWriter &tw, int *out_x, int *out_y) const
 {
-
+#ifdef WIN32
 
    const long options = DT_LEFT | DT_NOPREFIX;
 
@@ -177,6 +177,45 @@ void Text::calculate_position_and_advance_cursor(TextWriter &tw, int *out_x, int
    SelectObject(c, previous_font);
    SetMapMode(c, previous_map_mode);
 
+#else
+
+   // Convert passed-in text to Unicode
+   CFStringRef cftext = MacStringFromWide(m_text, true).get();
+   CFDataRef unitext = CFStringCreateExternalRepresentation(kCFAllocatorDefault, cftext, kCFStringEncodingUnicode, 0);
+   if (!unitext) throw PianoGameError(WSTRING(L"Couldn't convert string to unicode: '" << m_text << L"'"));
+   CFRelease(cftext);
+
+   // Create an ATSU layout
+   ATSUTextLayout layout;
+   const UniCharCount run_length = kATSUToTextEnd;
+   OSStatus status = ATSUCreateTextLayoutWithTextPtr((ConstUniCharArrayPtr)CFDataGetBytePtr(unitext), kATSUFromTextBeginning, kATSUToTextEnd, CFDataGetLength(unitext) / 2, 1, &run_length, &atsu_style_lookup[tw.size], &layout);
+   if (status != noErr) throw PianoGameError(WSTRING(L"Couldn't create ATSU text layout for string: '" << m_text << L"', Error code: " << static_cast<int>(status)));
+
+   // Measure the size of the resulting text
+   Rect drawing_rect = { 0, 0, 0, 0 };
+   
+   ATSUTextMeasurement before = 0;
+   ATSUTextMeasurement after = 0;
+   ATSUTextMeasurement ascent = 0;
+   ATSUTextMeasurement descent = 0;
+   
+   status = ATSUGetUnjustifiedBounds(layout, 0, kATSUToTextEnd, &before, &after, &ascent, &descent);
+   if (status != noErr) throw PianoGameError(WSTRING(L"Couldn't get unjustified bounds for text layout for string: '" << m_text << L"', Error code: " << static_cast<int>(status)));
+
+   // NOTE: the +1 here is completely arbitrary and seemed to place the text better.
+   // It may just be a difference between the Windows and Mac text placement systems.
+   drawing_rect.top += tw.y + 1;
+   drawing_rect.left += tw.x + FixRound(before);
+   drawing_rect.right += tw.x + FixRound(after);
+
+   // Not used.
+   drawing_rect.bottom = 0;
+
+   // Clean-up
+	ATSUDisposeTextLayout(layout);
+   CFRelease(unitext);
+
+#endif
 
    // Update the text-writer with post-draw coordinates
    if (tw.centered) drawing_rect.left -= (drawing_rect.right - drawing_rect.left) / 2;
@@ -197,10 +236,8 @@ TextWriter& newline(TextWriter& tw)
    return tw.next_line();
 }
 
-TextWriter& operator<<(TextWriter& tw, const std::wstring& s)       { return tw << Text(s, White); }
-TextWriter& operator<<(TextWriter& tw, const int& i)                { return tw << Text(i, White); }
-TextWriter& operator<<(TextWriter& tw, const unsigned int& i)       { return tw << Text(i, White); }
-TextWriter& operator<<(TextWriter& tw, const long& l)               { return tw << Text(l, White); }
-TextWriter& operator<<(TextWriter& tw, const long long& l)          { return tw << Text(l, White); }
-TextWriter& operator<<(TextWriter& tw, const unsigned long& l)      { return tw << Text(l, White); }
-TextWriter& operator<<(TextWriter& tw, const unsigned long long& l) { return tw << Text(l, White); }
+TextWriter& operator<<(TextWriter& tw, const std::wstring& s)  { return tw << Text(s, White); }
+TextWriter& operator<<(TextWriter& tw, const int& i)           { return tw << Text(i, White); }
+TextWriter& operator<<(TextWriter& tw, const unsigned int& i)  { return tw << Text(i, White); }
+TextWriter& operator<<(TextWriter& tw, const long& l)          { return tw << Text(l, White); }
+TextWriter& operator<<(TextWriter& tw, const unsigned long& l) { return tw << Text(l, White); }
