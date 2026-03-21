@@ -14,56 +14,60 @@
 
 using namespace std;
 
-MidiTrack MidiTrack::ReadFromStream(std::istream& stream)
+MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
 {
-    const static std::string MidiTrackHeader = "MTrk";
-    char header_id[5] = { 0, 0, 0, 0, 0 };
-    unsigned long track_length = 0;
+   // Verify the track header
+   const static string MidiTrackHeader = "MTrk";
 
-    stream.read(header_id, MidiTrackHeader.length());
-    if (stream.fail() || std::string(header_id) != MidiTrackHeader)
-    {
-        throw MidiError(MidiError_BadTrackHeaderType);
-    }
+   // I could use (MidiTrackHeader.length() + 1), but then this has to be
+   // dynamically allocated.  More hassle than it's worth.  MIDI is well
+   // defined and will always have a 4-byte header.  We use 5 so we get
+   // free null termination.
+   char header_id[5] = { 0, 0, 0, 0, 0 };
+   unsigned long track_length = 0;
 
-    stream.read(reinterpret_cast<char*>(&track_length), sizeof(unsigned long));
-    if (stream.fail())
-    {
-        throw MidiError(MidiError_TrackHeaderTooShort);
-    }
+   stream.read(header_id, MidiTrackHeader.length());
+   if (stream.fail() || std::string(header_id) != MidiTrackHeader) throw MidiError(MidiError_BadTrackHeaderType);
+   stream.read(reinterpret_cast<char*>(&track_length), sizeof(unsigned long));
+   if (stream.fail()) throw MidiError(MidiError_TrackHeaderTooShort);
 
-    track_length = BigToSystem32(track_length);
+   // Pull the full track out of the file all at once -- there is an
+   // End-Of-Track event, but this allows us handle malformed MIDI a
+   // little more gracefully.
+   track_length = BigToSystem32(track_length);
 
-    std::vector<char> buffer(track_length);
-    stream.read(buffer.data(), track_length);
+   std::vector<char> buffer(track_length);
+   stream.read(buffer.data(), track_length);
 
-    if (stream.fail())
-    {
-        throw MidiError(MidiError_TrackTooShort);
-    }
+   if (stream.fail())
+   {
+      throw MidiError(MidiError_TrackTooShort);
+   }
 
-    // Use stringstream for binary data processing
-    std::istringstream event_stream(std::string(buffer.begin(), buffer.end()), std::ios::binary);
+   // We have to jump through a couple hoops because istringstream
+   // can't handle binary data unless constructed through an std::string. 
+   std::istringstream event_stream(std::string(buffer.begin(), buffer.end()), std::ios::binary);
 
-    MidiTrack t;
+   MidiTrack t;
 
-    char last_status = 0;
-    unsigned long current_pulse_count = 0;
-    while (event_stream.peek() != EOF)
-    {
-        MidiEvent ev = MidiEvent::ReadFromStream(event_stream, last_status);
-        last_status = ev.StatusCode();
+   // Read events until we run out of track
+   char last_status = 0;
+   unsigned long current_pulse_count = 0;
+   while (event_stream.peek() != EOF)
+   {
+      MidiEvent ev = MidiEvent::ReadFromStream(event_stream, last_status); 
+      last_status = ev.StatusCode();
+      
+      t.m_events.push_back(std::move(ev));
 
-        t.m_events.push_back(std::move(ev)); // This line uses a lot of cpu according to profiler
+      current_pulse_count += ev.GetDeltaPulses();
+      t.m_event_pulses.push_back(current_pulse_count);
+   }
 
-        current_pulse_count += ev.GetDeltaPulses();
-        t.m_event_pulses.push_back(current_pulse_count);
-    }
+   t.BuildNoteSet();
+   t.DiscoverInstrument();
 
-    t.BuildNoteSet();
-    t.DiscoverInstrument();
-
-    return t;
+   return t;
 }
 
 struct NoteInfo

@@ -57,6 +57,9 @@ void GameState::SetManager(GameStateManager *manager)
    Init();
 }
 
+
+
+
 GameStateManager::~GameStateManager()
 {
    for (std::map<Texture, Tga*>::iterator i = m_textures.begin(); i != m_textures.end(); ++i)
@@ -153,6 +156,8 @@ void GameStateManager::ChangeState(GameState *new_state)
 
    m_next_state = new_state;
 }
+
+
 
 void GameStateManager::Update(bool skip_this_update)
 {

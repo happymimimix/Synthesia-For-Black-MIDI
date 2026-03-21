@@ -47,82 +47,123 @@ Midi Midi::ReadFromFile(const wstring &filename)
 
 Midi Midi::ReadFromStream(istream& stream)
 {
-    Midi m;
+   Midi m;
 
-    const static string MidiFileHeader = "MThd";
-    const static string RiffFileHeader = "RIFF";
-    char header_id[5] = { 0, 0, 0, 0, 0 };
+   // header_id is always "MThd" by definition
+   const static string MidiFileHeader = "MThd";
+   const static string RiffFileHeader = "RIFF";
 
-    // Read header ID and handle RIFF format if detected
-    stream.read(header_id, 4);
-    string header(header_id);
-    if (header != MidiFileHeader) {
-        if (header != RiffFileHeader) throw MidiError(MidiError_UnknownHeaderType);
+   // I could use (MidiFileHeader.length() + 1), but then this has to be
+   // dynamically allocated.  More hassle than it's worth.  MIDI is well
+   // defined and will always have a 4-byte header.  We use 5 so we get
+   // free null termination.
+   char           header_id[5] = { 0, 0, 0, 0, 0 };
+   unsigned long  header_length;
+   unsigned short format;
+   unsigned short track_count;
+   unsigned short time_division;
 
-        // Skip RIFF header (assuming handling is correct)
-        unsigned long throw_away;
-        stream.read(reinterpret_cast<char*>(&throw_away), sizeof(unsigned long) * 4);
+   stream.read(header_id, 4);
+   string header(header_id);
+   if (header != MidiFileHeader)
+   {
+      if (header != RiffFileHeader) throw MidiError(MidiError_UnknownHeaderType);
+      else
+      {
+         // There's no way this could be wong, so let's just skip it.
+         unsigned long throw_away;
+         stream.read(reinterpret_cast<char*>(&throw_away), sizeof(unsigned long) * 4);
 
-        // Recursively read MIDI from the rest of the stream
-        return ReadFromStream(stream);
-    }
+         // Call this recursively, without the RIFF header this time
+         return ReadFromStream(stream);
+      }
+   }
 
-    // Read the rest of the header
-    unsigned long header_length;
-    unsigned short format, track_count, time_division;
-    stream.read(reinterpret_cast<char*>(&header_length), sizeof(unsigned long));
-    stream.read(reinterpret_cast<char*>(&format), sizeof(unsigned short));
-    stream.read(reinterpret_cast<char*>(&track_count), sizeof(unsigned short));
-    stream.read(reinterpret_cast<char*>(&time_division), sizeof(unsigned short));
+   stream.read(reinterpret_cast<char*>(&header_length), sizeof(unsigned long));
+   stream.read(reinterpret_cast<char*>(&format),        sizeof(unsigned short));
+   stream.read(reinterpret_cast<char*>(&track_count),   sizeof(unsigned short));
+   stream.read(reinterpret_cast<char*>(&time_division), sizeof(unsigned short));
 
-    if (stream.fail()) throw MidiError(MidiError_NoHeader);
+   if (stream.fail()) throw MidiError(MidiError_NoHeader);
 
-    // Validate MIDI format and track count
-    header_length = BigToSystem32(header_length);
-    if (header_length != 6) throw MidiError(MidiError_BadHeaderSize);
+   // Chunk Size is always 6 by definition
+   const static unsigned int MidiFileHeaderChunkLength = 6;
 
-    enum MidiFormat { MidiFormat0 = 0, MidiFormat1, MidiFormat2 };
-    format = BigToSystem16(format);
-    if (format == MidiFormat2) throw MidiError(MidiError_Type2MidiNotSupported);
+   header_length = BigToSystem32(header_length);
+   if (header_length != MidiFileHeaderChunkLength)
+   {
+      throw MidiError(MidiError_BadHeaderSize);
+   }
 
-    track_count = BigToSystem16(track_count);
-    if (format == 0 && track_count != 1) throw MidiError(MidiError_BadType0Midi);
+   enum MidiFormat { MidiFormat0 = 0, MidiFormat1, MidiFormat2 };
 
-    // Process time division (assuming no SMPTE support)
-    time_division = BigToSystem16(time_division);
-    if ((time_division & 0x8000) != 0) throw MidiError(MidiError_SMTPETimingNotImplemented);
+   format = BigToSystem16(format);
+   if (format == MidiFormat2)
+   {
+      // MIDI 0: All information in 1 track
+      // MIDI 1: Multiple tracks intended to be played simultaneously
+      // MIDI 2: Multiple tracks intended to be played separately
+      //
+      // We do not support MIDI 2 at this time
+      throw MidiError(MidiError_Type2MidiNotSupported);
+   }
 
-    unsigned short pulses_per_quarter_note = time_division;
+   track_count = BigToSystem16(track_count);
+   if (format == 0 && track_count != 1)
+   {
+      // MIDI 0 has only 1 track by definition
+      throw MidiError(MidiError_BadType0Midi);
+   }
 
-    // Read tracks
-    for (int i = 0; i < track_count; ++i) {
-        m.m_tracks.push_back(MidiTrack::ReadFromStream(stream));
-    }
+   // Time division can be encoded two ways based on a bit-flag:
+   // - pulses per quarter note (15-bits)
+   // - SMTPE frames per second (7-bits for SMPTE frame count and 8-bits for clock ticks per frame)
+   time_division = BigToSystem16(time_division);
+   bool in_smpte = ((time_division & 0x8000) != 0);
 
-    m.BuildTempoTrack();
+   if (in_smpte)
+   {
+      throw MidiError(MidiError_SMTPETimingNotImplemented);
+   }
 
-    // Set track IDs and translate notes and events
-    for (size_t i = 0; i < m.m_tracks.size(); ++i) {
-        m.m_tracks[i].SetTrackId(i);
-        m.TranslateNotes(m.m_tracks[i].Notes(), pulses_per_quarter_note);
+   // We ignore the possibility of SMPTE timing, so we can
+   // use the time division value directly as PPQN.
+   unsigned short pulses_per_quarter_note = time_division;
 
-        MidiEventMicrosecondList event_usecs;
-        const MidiEventPulsesList& event_pulses = m.m_tracks[i].EventPulses();
-        for (size_t j = 0; j < event_pulses.size(); ++j) {
-            event_usecs.push_back(m.GetEventPulseInMicroseconds(event_pulses[j], pulses_per_quarter_note));
-        }
-        m.m_tracks[i].SetEventUsecs(event_usecs);
-    }
+   // Read in our tracks
+   for (int i = 0; i < track_count; ++i)
+   {
+      m.m_tracks.push_back(MidiTrack::ReadFromStream(stream));
+   }
 
-    m.m_initialized = true;
+   m.BuildTempoTrack();
 
-    // Calculate song length and dead air time
-    m.m_microsecond_base_song_length = m.m_translated_notes.rbegin()->end;
-    m.m_microsecond_dead_start_air = m.GetEventPulseInMicroseconds(m.FindFirstNotePulse(), pulses_per_quarter_note) - 1;
+   // Tell our tracks their IDs
+   for (size_t i = 0; i < m.m_tracks.size(); ++i)
+   {
+      m.m_tracks[i].SetTrackId(i);
+      // Translate each track's list of notes and list
+      // of events into microseconds.
+      m.TranslateNotes(m.m_tracks[i].Notes(), pulses_per_quarter_note);
 
-    return m;
+      MidiEventMicrosecondList event_usecs;
+      const MidiEventPulsesList& event_pulses = m.m_tracks[i].EventPulses();
+      for (size_t j = 0; j < event_pulses.size(); ++j) {
+          event_usecs.push_back(m.GetEventPulseInMicroseconds(event_pulses[j], pulses_per_quarter_note));
+      }
+      m.m_tracks[i].SetEventUsecs(event_usecs);
+   }
+
+   m.m_initialized = true;
+
+   // Just grab the end of the last note to find out how long the song is
+   m.m_microsecond_base_song_length = m.m_translated_notes.rbegin()->end;
+
+   // Eat everything up until *just* before the first note event
+   m.m_microsecond_dead_start_air = m.GetEventPulseInMicroseconds(m.FindFirstNotePulse(), pulses_per_quarter_note) - 1;
+   
+   return m;
 }
-
 
 // NOTE: This is required for much of the other functionality provided
 // by this class, however, this causes a destructive change in the way
@@ -313,17 +354,19 @@ void Midi::Reset(microseconds_t lead_in_microseconds, microseconds_t lead_out_mi
 
 void Midi::TranslateNotes(const NoteSet& notes, unsigned short pulses_per_quarter_note)
 {
-    for (const auto& note : notes) {
-        TranslatedNote trans;
-        trans.note_id = note.note_id;
-        trans.track_id = note.track_id;
-        trans.channel = note.channel;
-        trans.velocity = note.velocity;
-        trans.start = GetEventPulseInMicroseconds(note.start, pulses_per_quarter_note);
-        trans.end = GetEventPulseInMicroseconds(note.end, pulses_per_quarter_note);
+   for (const auto& note : notes)
+   {
+      TranslatedNote trans;
+      
+      trans.note_id = note.note_id;
+      trans.track_id = note.track_id;
+      trans.channel = note.channel;
+      trans.velocity = note.velocity;
+      trans.start = GetEventPulseInMicroseconds(note.start, pulses_per_quarter_note);
+      trans.end = GetEventPulseInMicroseconds(note.end, pulses_per_quarter_note);
 
-        m_translated_notes.insert(trans);
-    }
+      m_translated_notes.insert(trans);
+   }
 }
 
 MidiEventListWithTrackId Midi::Update(microseconds_t delta_microseconds)

@@ -37,7 +37,7 @@ void PlayingState::SetupNoteState()
       TranslatedNote n = *i;
 
       n.state = AutoPlayed;
-      if (m_state.track_properties[n.track_id].mode == Track::ModeYouPlay || (!m_state.midi_in && m_state.track_properties[n.track_id].mode == Track::ModePlayedAutomatically)) n.state = UserPlayable;
+      if (m_state.track_properties[n.track_id].mode == Track::ModeYouPlay) n.state = UserPlayable;
       
       m_notes.insert(n);
    }
@@ -80,30 +80,30 @@ string GetExePath(void) {
 void PlayingState::Init()
 {
    Compatible::ShowMouseCursor();
-if (m_state.framedump) {
-    //Running ffmpeg
-    char buf[1024] = {};
-    snprintf(buf, sizeof(buf), "%s&cd \"%s\"&md \"%s\\SFBM_Framedump\"&start cmd /k ffmpeg -r 60 -f rawvideo -s %dx%d -pix_fmt bgra -i async:\\\\.\\pipe\\sfbmdump -c:v h264 -qp 19 -pix_fmt yuv420p -vf vflip \"%s\\SFBM_Framedump\\Output.mp4\"", GetExePath().substr(0, 2).c_str(), GetExePath().c_str(), GetExePath().c_str(), GetStateWidth(), GetStateHeight(), GetExePath().c_str());
-    system(buf);
-    m_framedump_handle = CreateNamedPipe(TEXT("\\\\.\\pipe\\sfbmdump"),
-        PIPE_ACCESS_OUTBOUND,
-        PIPE_TYPE_BYTE | PIPE_WAIT,
-        PIPE_UNLIMITED_INSTANCES,
-        static_cast<DWORD>(GetStateWidth() * GetStateHeight() * 4 * 120),
-        0,
-        0,
-        nullptr);
-       ConnectNamedPipe(m_framedump_handle, NULL);
-       m_framedump_fb = malloc(GetStateWidth() * GetStateHeight() * 4);
-       m_delay_idx = 0;
-       m_last_delta = 0;
+   if (m_state.framedump) {
+      //Running ffmpeg
+      char buf[1024] = {};
+      snprintf(buf, sizeof(buf), "%s&cd \"%s\"&md \"%s\\SFBM_Framedump\"&start cmd /k ffmpeg -r 60 -f rawvideo -s %dx%d -pix_fmt bgra -i async:\\\\.\\pipe\\sfbmdump -c:v h264 -qp 19 -pix_fmt yuv420p -vf vflip \"%s\\SFBM_Framedump\\Output.mp4\"", GetExePath().substr(0, 2).c_str(), GetExePath().c_str(), GetExePath().c_str(), GetStateWidth(), GetStateHeight(), GetExePath().c_str());
+      system(buf);
+      m_framedump_handle = CreateNamedPipe(TEXT("\\\\.\\pipe\\sfbmdump"),
+         PIPE_ACCESS_OUTBOUND,
+         PIPE_TYPE_BYTE | PIPE_WAIT,
+         PIPE_UNLIMITED_INSTANCES,
+         static_cast<DWORD>(GetStateWidth() * GetStateHeight() * 4 * 120),
+         0,
+         0,
+         nullptr);
+      ConnectNamedPipe(m_framedump_handle, NULL);
+      m_framedump_fb = malloc(GetStateWidth() * GetStateHeight() * 4);
+      m_delay_idx = 0;
+      m_last_delta = 0;
    }
    if (!m_state.midi) throw GameStateError("PlayingState: Init was passed a null MIDI!");
    pause_text = L"Press 'space' to begin...";
    m_look_ahead_you_play_note_count = 0;
    for (size_t i = 0; i < m_state.track_properties.size(); ++i)
    {
-      if (m_state.track_properties[i].mode == Track::ModeYouPlay || (!m_state.midi_in && m_state.track_properties[i].mode == Track::ModePlayedAutomatically))
+      if (m_state.track_properties[i].mode == Track::ModeYouPlay)
       {
          m_look_ahead_you_play_note_count += m_state.midi->Tracks()[i].Notes().size();
          m_any_you_play_tracks = true;
@@ -152,10 +152,10 @@ void PlayingState::Play(microseconds_t delta_microseconds)
       bool play = false;
       switch (m_state.track_properties[track_id].mode)
       {
-      case Track::ModeNotPlayed:           draw = false;            play = false;            break;
-      case Track::ModePlayedButHidden:     draw = false;            play = true;             break;
+      case Track::ModeNotPlayed:           draw = false;  play = false;  break;
+      case Track::ModePlayedButHidden:     draw = false;  play = true;   break;
       case Track::ModeYouPlay:             draw = !m_state.midi_in; play = !m_state.midi_in; break;
-      case Track::ModePlayedAutomatically: draw = true;             play = true;             break;
+      case Track::ModePlayedAutomatically: draw = true;   play = true;   break;
       }
 
       // Even in "You Play" tracks, we have to play the non-note
@@ -360,35 +360,26 @@ void PlayingState::Update()
       if (note->end < cur_time && window_end < cur_time)
       {
          if (m_state.midi_in) {
-            if (note->state == UserMissed)
-            {
-                // They missed a note, reset the combo counter
-                m_current_combo = 0;
-                m_state.stats.notes_user_could_have_played++;
-                m_state.stats.speed_integral += m_state.song_speed;
-            }
-         }
-         else if (i->state == UserPlayable) {
-            const static double NoteValue = 100.0;
-            m_state.stats.score += NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
+         if (note->state == UserMissed)
+         {
+            // They missed a note, reset the combo counter
+            m_current_combo = 0;
 
             m_state.stats.notes_user_could_have_played++;
             m_state.stats.speed_integral += m_state.song_speed;
+         }
+         } else if (i->state == UserPlayable) {
+         const static double NoteValue = 100.0;
+         m_state.stats.score += NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
 
-            m_state.stats.notes_user_actually_played++;
-            m_current_combo++;
-            m_state.stats.longest_combo = max(m_current_combo, m_state.stats.longest_combo);
-             
-            TranslatedNote note_copy = *note;
-            note_copy.state = UserHit;
+         m_state.stats.notes_user_could_have_played++;
+         m_state.stats.speed_integral += m_state.song_speed;
 
-            m_notes.erase(note);
-            m_notes.insert(note_copy);
+         m_state.stats.notes_user_actually_played++;
+         m_current_combo++;
+         m_state.stats.longest_combo = max(m_current_combo, m_state.stats.longest_combo);
 
-            // Re-connect the (now-invalid) iterator to the replacement
-            note = m_notes.find(note_copy);
-
-            m_state.stats.total_notes_user_pressed++;
+         m_state.stats.total_notes_user_pressed++;
          }
          m_notes.erase(note);
       }
@@ -434,10 +425,10 @@ void PlayingState::Update()
       if (m_state.midi_out) m_state.midi_out->Reset();
       if (m_state.midi_in) m_state.midi_in->Reset();
       if (m_state.framedump) {
-          char buf[1024] = {};
-          snprintf(buf, sizeof(buf), "start \"Result\" \"C:\\Windows\\Explorer.exe\" \"%s\\SFBM_Framedump\\\"", GetExePath().c_str());
-          system(buf);
-          CloseHandle(m_framedump_handle);
+         char buf[1024] = {};
+         snprintf(buf, sizeof(buf), "start \"Result\" \"C:\\Windows\\Explorer.exe\" \"%s\\SFBM_Framedump\\\"", GetExePath().c_str());
+         system(buf);
+         CloseHandle(m_framedump_handle);
       }
 
       ChangeState(new TrackSelectionState(m_state));
@@ -450,10 +441,10 @@ void PlayingState::Update()
       if (m_state.midi_out) m_state.midi_out->Reset();
       if (m_state.midi_in) m_state.midi_in->Reset();
       if (m_state.framedump) {
-          char buf[1024] = {};
-          snprintf(buf, sizeof(buf), "start \"Result\" \"C:\\Windows\\Explorer.exe\" \"%s\\SFBM_Framedump\\\"", GetExePath().c_str());
-          system(buf);
-          CloseHandle(m_framedump_handle);
+         char buf[1024] = {};
+         snprintf(buf, sizeof(buf), "start \"Result\" \"C:\\Windows\\Explorer.exe\" \"%s\\SFBM_Framedump\\\"", GetExePath().c_str());
+         system(buf);
+         CloseHandle(m_framedump_handle);
       }
 
       ChangeState(new StatsState(m_state));
@@ -574,8 +565,8 @@ void PlayingState::Draw(Renderer &renderer) const
       combo_text << WSTRING(m_current_combo << L" Combo!");
    }
    if (m_state.framedump && !m_paused) {
-       glReadPixels(0, 0, GetStateWidth(), GetStateHeight(), GL_BGRA_EXT, GL_UNSIGNED_BYTE, m_framedump_fb);
-       WriteFile(m_framedump_handle, m_framedump_fb, static_cast<DWORD>(GetStateWidth() * GetStateHeight() * 4), nullptr, nullptr);
+      glReadPixels(0, 0, GetStateWidth(), GetStateHeight(), GL_BGRA_EXT, GL_UNSIGNED_BYTE, m_framedump_fb);
+      WriteFile(m_framedump_handle, m_framedump_fb, static_cast<DWORD>(GetStateWidth() * GetStateHeight() * 4), nullptr, nullptr);
    }
 }
 

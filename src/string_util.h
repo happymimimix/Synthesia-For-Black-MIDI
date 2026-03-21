@@ -122,7 +122,9 @@ public:
       //
       // std::ctype<>::widen is one of them.  "suppress" only stops
       // the warning for the very next line.
-
+      #ifdef WIN32
+      #pragma warning(suppress : 4996)
+      #endif
 
       pCType_->widen(pSrcBeg, pSrcBeg + srcLen, &tmp[0]);
       return std::basic_string<E, T, A>(&tmp[0], srcLen);

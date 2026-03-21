@@ -80,7 +80,7 @@ void TrackSelectionState::Init()
       int x = global_x_offset + (TrackTileWidth + Layout::ScreenMarginX)*tiles_on_this_line;
       int y = current_y;
 
-      Track::Mode mode = Track::ModePlayedAutomatically;
+      Track::Mode mode = Track::ModeYouPlay;
 
       Track::TrackColor color = static_cast<Track::TrackColor>((m_track_tiles.size()) % Track::UserSelectableColorCount);
 
