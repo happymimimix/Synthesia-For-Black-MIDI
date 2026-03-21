@@ -592,13 +592,13 @@ static pascal void GameLoop(EventLoopTimerRef inTimer, void *)
    }
    catch (const std::exception &e)
    {
-      wstring wrapped_description = WSTRING(L"Piano Game detected an unknown problem and must close!  '" << e.what() << "'" << error_footer);
+      wstring wrapped_description = WSTRING(L"SFBM detected an unknown problem and must close!  '" << e.what() << "'" << error_footer);
       Compatible::ShowError(wrapped_description);
       Compatible::GracefulShutdown();
    }
    catch (...)
    {
-      wstring wrapped_description = WSTRING(L"Piano Game detected an unknown problem and must close!" << error_footer);
+      wstring wrapped_description = WSTRING(L"SFBM detected an unknown problem and must close!" << error_footer);
       Compatible::ShowError(wrapped_description);
       Compatible::GracefulShutdown();
    }

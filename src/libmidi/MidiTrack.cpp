@@ -89,7 +89,7 @@ void MidiTrack::BuildNoteSet()
    // begin a new one.
    //
    // A note_on with velocity 0 is a note_off
-   std::map<NoteId, NoteInfo> m_active_notes;
+   std::array<std::pair<NoteInfo, bool>, 0xFF> m_active_notes;
 
    for (size_t i = 0; i < m_events.size(); ++i)
    {
@@ -100,18 +100,18 @@ void MidiTrack::BuildNoteSet()
       NoteId id = ev.NoteNumber();
 
       // Check for an active note
-      std::map<NoteId, NoteInfo>::iterator find_ret = m_active_notes.find(id);
-      bool active_event = (find_ret !=  m_active_notes.end());
+      bool active_event = m_active_notes[id].second;
 
       // Close off the last event if there was one
       if (active_event)
       {
+         auto find_ret = m_active_notes[id].first;
          Note n;
-         n.start = find_ret->second.pulses;
+         n.start = find_ret.pulses;
          n.end = m_event_pulses[i];
          n.note_id = id;
-         n.channel = find_ret->second.channel;
-         n.velocity = find_ret->second.velocity;
+         n.channel = find_ret.channel;
+         n.velocity = find_ret.velocity;
 
          // NOTE: This must be set at the next level up.  The track
          // itself has no idea what its index is.
@@ -119,7 +119,7 @@ void MidiTrack::BuildNoteSet()
 
          // Add a note and remove this NoteId from the active list
          m_note_set.insert(n);
-         m_active_notes.erase(find_ret);
+         m_active_notes[id].second = false;
       }
 
       // We've handled any active events.  If this was a note_off we're done.
@@ -131,7 +131,7 @@ void MidiTrack::BuildNoteSet()
       info.velocity = ev.NoteVelocity();
       info.pulses = m_event_pulses[i];
 
-      m_active_notes[id] = info;
+      m_active_notes[id] = std::make_pair(info, true);
    }
 
    if (m_active_notes.size() > 0)

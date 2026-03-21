@@ -5,7 +5,7 @@
 #ifndef __KEYBOARDDISPLAY_H
 #define __KEYBOARDDISPLAY_H
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <string>
 
@@ -21,7 +21,7 @@ enum KeyboardSize
 };
 
 
-typedef std::map<std::string, Track::TrackColor> KeyNames;
+typedef std::unordered_map<std::string, Track::TrackColor> KeyNames;
 
 class Renderer;
 class Tga;

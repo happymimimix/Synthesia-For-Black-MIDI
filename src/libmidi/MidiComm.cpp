@@ -396,8 +396,8 @@ MidiCommIn::MidiCommIn(unsigned int device_id)
 
    m_description = MidiCommIn::GetDeviceList()[device_id];
 
-   MIDIClientCreate(CFSTR("Piano Game"), 0, this, &m_client);
-   MIDIInputPortCreate(m_client, CFSTR("Piano Game In"), midi_input, this, &m_port);
+   MIDIClientCreate(CFSTR("SFBM"), 0, this, &m_client);
+   MIDIInputPortCreate(m_client, CFSTR("SFBM_MIDI_INPUT"), midi_input, this, &m_port);
    
    MIDIEndpointRef source = MIDIGetSource(device_id);
    MIDIPortConnectSource(m_port, source, this);
@@ -537,8 +537,8 @@ void MidiCommOut::Acquire(unsigned int device_id)
    }
    else
    {
-      MIDIClientCreate(CFSTR("Piano Game"), 0, this, &m_client);
-      MIDIOutputPortCreate(m_client, CFSTR("Piano Game Out"), &m_port);
+      MIDIClientCreate(CFSTR("SFBM"), 0, this, &m_client);
+      MIDIOutputPortCreate(m_client, CFSTR("SFBM_MIDI_OUTPUT"), &m_port);
       
       // The -1 here is because device_id 0 represents the built-in
       // synth and pushes all the other devices over by one.

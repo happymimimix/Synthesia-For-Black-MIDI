@@ -6,7 +6,6 @@
 #include "MidiEvent.h"
 #include "MidiTrack.h"
 #include "MidiUtil.h"
-#include <algorithm>
 
 #include <fstream>
 #include <sstream>
@@ -33,7 +32,9 @@ Midi Midi::ReadFromFile(const wstring &filename)
 
    try
    {
-      m = ReadFromStream(file);
+      stringstream file_mem;
+      copy(istreambuf_iterator<char>(file), istreambuf_iterator<char>(), ostreambuf_iterator<char>(file_mem));
+      m = ReadFromStream(file_mem);
    }
    catch (const MidiError &e)
    {
