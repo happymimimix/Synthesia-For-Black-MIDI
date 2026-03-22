@@ -162,11 +162,11 @@ void KeyboardDisplay::DrawWhiteKeys(Renderer &renderer, const Tga *tex, bool act
       // Check to see if this is one of the active notes
       const string note_name = STRING(current_white << current_octave);
 
-      KeyNames::const_iterator find_result = m_active_keys.find(note_name);
-      bool active = (find_result != m_active_keys.end());
+      KeyColors::const_iterator find_result = m_key_colors.find(note_name);
+      bool active = (find_result != m_key_colors.end() && !find_result->second.empty());
 
       Color c = white;
-      if (active) c = Track::ColorNoteWhite[find_result->second];
+      if (active) c = Track::ColorNoteWhite[find_result->second.back()];
 
       if ((active_only && active) || !active_only)
       {
@@ -230,14 +230,14 @@ void KeyboardDisplay::DrawBlackKeys(Renderer &renderer, const Tga *tex, bool act
             // Check to see if this is one of the active notes
             const string note_name = STRING(current_white << '#' << current_octave);
 
-            KeyNames::const_iterator find_result = m_active_keys.find(note_name);
-            bool active = (find_result != m_active_keys.end());
+            KeyColors::const_iterator find_result = m_key_colors.find(note_name);
+            bool active = (find_result != m_key_colors.end() && !find_result->second.empty());
 
             // In this case, MissedNote isn't actually MissedNote.  In the black key
             // texture we use this value (which doesn't make any sense in this context)
             // as the default "Black" color.
             Track::TrackColor c = Track::MissedNote;
-            if (active) c = find_result->second;
+            if (active) c = find_result->second.back();
 
             if (!active_only || (active_only && active))
             {
@@ -467,6 +467,27 @@ void KeyboardDisplay::DrawNotePass(Renderer &renderer, const Tga *tex_white, con
 
 void KeyboardDisplay::SetKeyActive(const string &key_name, bool active, Track::TrackColor color)
 {
-   if (active) m_active_keys[key_name] = color;
-   else m_active_keys.erase(key_name);
+   if (active) m_key_colors[key_name].push_back(color);
+   else
+   {
+      KeyColors::iterator find_result = m_key_colors.find(key_name);
+      if (find_result != m_key_colors.end())
+      {
+         std::vector<Track::TrackColor> &colors = find_result->second;
+         // Find and remove the first instance of this color
+         for (std::vector<Track::TrackColor>::iterator color_it = colors.begin(); color_it != colors.end(); ++color_it)
+         {
+            if (*color_it == color)
+            {
+               colors.erase(color_it);
+               break;
+            }
+         }
+         // If vector is now empty, remove the key entry entirely
+         if (colors.empty())
+         {
+            m_key_colors.erase(find_result);
+         }
+      }
+   }
 }

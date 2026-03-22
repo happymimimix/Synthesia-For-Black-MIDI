@@ -64,8 +64,6 @@ void PlayingState::ResetSong()
    m_state.stats.total_note_count = static_cast<int>(m_notes.size());
 
    m_current_combo = 0;
-
-   m_manual_ms = 0;
 }
 
 PlayingState::PlayingState(const SharedState &state)
@@ -312,8 +310,6 @@ void PlayingState::Listen()
 
 void PlayingState::Update()
 {
-   unsigned long ms = (m_state.framedump ? m_manual_ms : GetStateMilliseconds()) * max(m_state.song_speed, 50) / 100;
-
    microseconds_t delta_microseconds = static_cast<microseconds_t>(m_state.framedump ? m_last_delta : GetDeltaMilliseconds()) * 1000;
 
    // The 100 term is really paired with the playback speed, but this
@@ -453,7 +449,6 @@ void PlayingState::Update()
    }
    if (m_state.framedump) {
        m_last_delta = FRAME_DELAYS[m_delay_idx];
-       m_manual_ms += m_last_delta;
        m_delay_idx = (m_delay_idx + 1) % 3;
    }
 }

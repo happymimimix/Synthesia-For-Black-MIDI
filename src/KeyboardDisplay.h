@@ -21,7 +21,7 @@ enum KeyboardSize
 };
 
 
-typedef std::unordered_map<std::string, Track::TrackColor> KeyNames;
+typedef std::unordered_map<std::string, std::vector<Track::TrackColor>> KeyColors;
 
 class Renderer;
 class Tga;
@@ -39,7 +39,7 @@ public:
 
    void SetKeyActive(const std::string &key_name, bool active, Track::TrackColor color);
 
-   void ResetActiveKeys() { m_active_keys.clear(); }
+   void ResetActiveKeys() { m_key_colors.clear(); }
 
 private:
 
@@ -114,7 +114,7 @@ private:
    int GetWhiteKeyCount() const;
 
    KeyboardSize m_size;
-   KeyNames m_active_keys;
+   KeyColors m_key_colors;
 
    int m_width;
    int m_height;

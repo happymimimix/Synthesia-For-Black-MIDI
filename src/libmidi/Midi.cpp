@@ -32,9 +32,7 @@ Midi Midi::ReadFromFile(const wstring &filename)
 
    try
    {
-      stringstream file_mem;
-      copy(istreambuf_iterator<char>(file), istreambuf_iterator<char>(), ostreambuf_iterator<char>(file_mem));
-      m = ReadFromStream(file_mem);
+      m = ReadFromStream(file);
    }
    catch (const MidiError &e)
    {

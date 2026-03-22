@@ -19,7 +19,11 @@ using namespace std;
 
 void midi_check(MMRESULT ret)
 {
-   if (ret == MMSYSERR_NOERROR) return;
+   if (ret == MMSYSERR_NOERROR ||
+       ret == MIDIERR_STILLPLAYING ||
+       ret == MIDIERR_NOTREADY ||
+       ret == MMSYSERR_NOTSUPPORTED ||
+       ret == MMSYSERR_MOREDATA) return;
 
    switch (ret)
    {
