@@ -460,9 +460,10 @@ void PlayingState::Update()
 
 void PlayingState::Draw(Renderer &renderer) const
 {
-   const Tga *key_tex[3] = { GetTexture(PlayKeyRail),
+   const Tga *key_tex[4] = { GetTexture(PlayKeyRail),
                              GetTexture(PlayKeyShadow),
-                             GetTexture(PlayKeysBlack, true) };
+                             GetTexture(PlayKeysBlack, true),
+                             GetTexture(PlayKeysWhite, true) };
 
    const Tga *note_tex[4] = { GetTexture(PlayNotesWhiteShadow, true),
                               GetTexture(PlayNotesBlackShadow, true),

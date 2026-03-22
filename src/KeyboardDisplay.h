@@ -33,7 +33,7 @@ public:
 
    KeyboardDisplay(KeyboardSize size, int pixelWidth, int pixelHeight);
 
-   void Draw(Renderer &renderer, const Tga *key_tex[3], const Tga *note_tex[4], int x, int y,
+   void Draw(Renderer &renderer, const Tga *key_tex[4], const Tga *note_tex[4], int x, int y,
       const TranslatedNoteSet &notes, microseconds_t show_duration, microseconds_t current_time,
       const std::vector<Track::Properties> &track_properties);
 
@@ -72,9 +72,10 @@ private:
       int bottom;
    };
    const static KeyTexDimensions BlackKeyDimensions;
+   const static KeyTexDimensions WhiteKeyDimensions;
 
 
-   void DrawWhiteKeys(Renderer &renderer, bool active_only, int key_count, int key_width, int key_height, 
+   void DrawWhiteKeys(Renderer &renderer, const Tga *tex, bool active_only, int key_count, int key_width, int key_height, 
       int key_space, int x_offset, int y_offset) const;
 
    void DrawBlackKeys(Renderer &renderer, const Tga *tex, bool active_only,int white_key_count, int white_width,
@@ -98,6 +99,7 @@ private:
 
    // This works very much like DrawNote
    void DrawBlackKey(Renderer &renderer, const Tga *tex, const KeyTexDimensions &tex_dimensions, int x, int y, int w, int h, Track::TrackColor color) const;
+   void DrawWhiteKey(Renderer &renderer, const Tga *tex, const KeyTexDimensions &tex_dimensions, int x, int y, int w, int h, bool active) const;
 
    // Retrieves which white-key a piano with the given key count
    // will start with on the far left side

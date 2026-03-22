@@ -15,19 +15,8 @@ using namespace std;
 
 const KeyboardDisplay::NoteTexDimensions KeyboardDisplay::WhiteNoteDimensions = { 32, 128, 4, 25, 22, 28, 93, 100 };
 const KeyboardDisplay::NoteTexDimensions KeyboardDisplay::BlackNoteDimensions = { 32,  64, 8, 20,  3,  8, 49,  55 };
-struct KeyTexDimensions
-{
-   int tex_width;
-   int tex_height;
-   
-   int left;
-   int right;
-   
-   int top;
-   int bottom;
-};
 const KeyboardDisplay::KeyTexDimensions KeyboardDisplay::BlackKeyDimensions = { 32, 128, 8, 20, 15, 109 };
-
+const KeyboardDisplay::KeyTexDimensions KeyboardDisplay::WhiteKeyDimensions = { 32, 256, 1, 30, 1, 198 };
 
 KeyboardDisplay::KeyboardDisplay(KeyboardSize size, int pixelWidth, int pixelHeight)
    : m_size(size), m_width(pixelWidth), m_height(pixelHeight)
@@ -36,7 +25,7 @@ KeyboardDisplay::KeyboardDisplay(KeyboardSize size, int pixelWidth, int pixelHei
 
 
 
-void KeyboardDisplay::Draw(Renderer &renderer, const Tga *key_tex[3], const Tga *note_tex[4], int x, int y,
+void KeyboardDisplay::Draw(Renderer &renderer, const Tga *key_tex[4], const Tga *note_tex[4], int x, int y,
                            const TranslatedNoteSet &notes, microseconds_t show_duration, microseconds_t current_time,
                            const std::vector<Track::Properties> &track_properties)
 {
@@ -72,7 +61,7 @@ void KeyboardDisplay::Draw(Renderer &renderer, const Tga *key_tex[3], const Tga 
    const int y_roll_under = white_height*3/4;
 
    // Symbolic names for the arbitrary array passed in here
-   enum { Rail, Shadow, BlackKey };
+   enum { Rail, Shadow, BlackKey, WhiteKey };
 
    DrawGuides(renderer, white_key_count, white_width, white_space, x + x_offset, y, y_offset);
 
@@ -90,7 +79,7 @@ void KeyboardDisplay::Draw(Renderer &renderer, const Tga *key_tex[3], const Tga 
    renderer.DrawQuad(x + x_offset, y+y_offset, ActualKeyboardWidth, white_height);
 
    DrawShadow(renderer, key_tex[Shadow], x+x_offset, y+y_offset+white_height - 10, ActualKeyboardWidth);
-   DrawWhiteKeys(renderer, false, white_key_count, white_width, white_height, white_space, x+x_offset, y+y_offset);
+   DrawWhiteKeys(renderer, key_tex[WhiteKey], false, white_key_count, white_width, white_height, white_space, x+x_offset, y+y_offset);
    DrawBlackKeys(renderer, key_tex[BlackKey], false, white_key_count, white_width, black_width, black_height, white_space, x+x_offset, y+y_offset, black_offset);
    DrawShadow(renderer, key_tex[Shadow], x+x_offset, y+y_offset, ActualKeyboardWidth);
    DrawRail(renderer, key_tex[Rail], x+x_offset, y+y_offset, ActualKeyboardWidth);
@@ -136,7 +125,32 @@ int KeyboardDisplay::GetWhiteKeyCount() const
    }
 }
 
-void KeyboardDisplay::DrawWhiteKeys(Renderer &renderer, bool active_only, int key_count, int key_width, int key_height,
+void KeyboardDisplay::DrawWhiteKey(Renderer &renderer, const Tga *tex, const KeyTexDimensions &tex_dimensions,
+                                   int x, int y, int w, int h, bool active) const
+{
+   const KeyTexDimensions &d = tex_dimensions;
+
+   const int tex_w = d.right - d.left;
+   const double width_scale = double(w) / double(tex_w);
+   const double full_tex_width = d.tex_width * width_scale;
+   const double left_offset = d.left * width_scale;
+
+   const int src_x = active ? d.tex_width : 0;
+   const int dest_x = int(x - left_offset);
+   const int dest_w = int(full_tex_width);
+
+   const int tex_h = d.bottom - d.top;
+   const double height_scale = double(h) / double(tex_h);
+   const double full_tex_height = d.tex_height * height_scale;
+   const double top_offset = d.top * height_scale;
+
+   const int dest_y = int(y - top_offset);
+   const int dest_h = int(full_tex_height);
+
+   renderer.DrawStretchedTga(tex, dest_x, dest_y, dest_w, dest_h, src_x, 0, d.tex_width, d.tex_height);
+}
+
+void KeyboardDisplay::DrawWhiteKeys(Renderer &renderer, const Tga *tex, bool active_only, int key_count, int key_width, int key_height,
    int key_space, int x_offset, int y_offset) const
 {
    Color white = Renderer::ToColor(255, 255, 255);
@@ -159,7 +173,7 @@ void KeyboardDisplay::DrawWhiteKeys(Renderer &renderer, bool active_only, int ke
          renderer.SetColor(c);
 
          const int key_x = i * (key_width + key_space) + x_offset;
-         renderer.DrawQuad(key_x, y_offset, key_width, key_height);
+         DrawWhiteKey(renderer, tex, WhiteKeyDimensions, key_x, y_offset, key_width, key_height, active);
       }
 
       current_white++;
