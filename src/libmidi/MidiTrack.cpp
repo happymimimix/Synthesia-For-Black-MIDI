@@ -41,6 +41,7 @@ MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
 
    if (stream.fail())
    {
+      buffer.clear();
       throw MidiError(MidiError_TrackTooShort);
    }
 

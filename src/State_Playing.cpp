@@ -77,7 +77,7 @@ string GetExePath(void) {
 }
 void PlayingState::Init()
 {
-   Compatible::ShowMouseCursor();
+   Compatible::HideMouseCursor();
    if (m_state.framedump) {
       //Running ffmpeg
       char buf[1024] = {};
@@ -115,11 +115,6 @@ void PlayingState::Init()
 
    m_keyboard = new KeyboardDisplay(KeyboardSize128, GetStateWidth() - Layout::ScreenMarginX*2, CalcKeyboardHeight());
    ResetSong();
-}
-
-PlayingState::~PlayingState()
-{
-   Compatible::ShowMouseCursor();
 }
 
 int PlayingState::CalcKeyboardHeight() const

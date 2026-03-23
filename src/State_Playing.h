@@ -41,7 +41,6 @@ class PlayingState : public GameState
 {
 public:
    PlayingState(const SharedState &state);
-   ~PlayingState();
 
 protected:
    virtual void Init();

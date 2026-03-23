@@ -22,7 +22,7 @@ TrackSelectionState::TrackSelectionState(const SharedState &state)
 
 void TrackSelectionState::Init()
 {
-    Compatible::ShowMouseCursor();
+   Compatible::HideMouseCursor();
    if (m_state.midi_out) m_state.midi_out->Reset();
 
    Midi &m = *m_state.midi;

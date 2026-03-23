@@ -14,7 +14,7 @@ using namespace std;
 
 void StatsState::Init()
 {
-    Compatible::ShowMouseCursor();
+   Compatible::HideMouseCursor();
    m_back_button = ButtonState(Layout::ScreenMarginX,
       GetStateHeight() - Layout::ScreenMarginY/2 - Layout::ButtonHeight/2,
       Layout::ButtonWidth, Layout::ButtonHeight);

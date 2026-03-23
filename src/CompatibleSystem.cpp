@@ -35,7 +35,7 @@ namespace Compatible
       DialogItemIndex item;
 
       // The cursor might have been hidden.
-      ShowMouseCursor();
+      HideMouseCursor();
 
       CreateStandardAlert(kAlertStopAlert, MacStringFromWide(message_box_title).get(), MacStringFromWide(err).get(), 0, &dialog);
       RunStandardAlert(dialog, 0, &item);
@@ -43,15 +43,14 @@ namespace Compatible
 #endif
    }
    
-   void ShowMouseCursor()
+   void HideMouseCursor()
    {
 #ifdef WIN32
-      ShowCursor(true);
+      ShowCursor(false);
 #else
-      CGDisplayShowCursor(kCGDirectMainDisplay);
+      CGDisplayHideCursor(kCGDirectMainDisplay);
 #endif
    }
-
 
    int GetDisplayWidth()
    {

@@ -44,7 +44,7 @@ Midi Midi::ReadFromFile(const wstring &filename)
    return m;
 }
 
-Midi Midi::ReadFromStream(istream& stream)
+Midi Midi::ReadFromStream(istream &stream)
 {
    Midi m;
 
@@ -141,8 +141,10 @@ Midi Midi::ReadFromStream(istream& stream)
    for (size_t i = 0; i < m.m_tracks.size(); ++i)
    {
       m.m_tracks[i].SetTrackId(i);
-      // Translate each track's list of notes and list
-      // of events into microseconds.
+
+   // Translate each track's list of notes and list
+   // of events into microseconds.
+
       m.TranslateNotes(m.m_tracks[i].Notes(), pulses_per_quarter_note);
 
       MidiEventMicrosecondList event_usecs;
@@ -351,7 +353,7 @@ void Midi::Reset(microseconds_t lead_in_microseconds, microseconds_t lead_out_mi
    for (MidiTrackList::iterator i = m_tracks.begin(); i != m_tracks.end(); ++i) { i->Reset(); }
 }
 
-void Midi::TranslateNotes(const NoteSet& notes, unsigned short pulses_per_quarter_note)
+void Midi::TranslateNotes(const NoteSet &notes, unsigned short pulses_per_quarter_note)
 {
    for (const auto& note : notes)
    {

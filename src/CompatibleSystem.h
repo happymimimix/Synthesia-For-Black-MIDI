@@ -19,7 +19,7 @@ namespace Compatible
    int GetDisplayWidth();
    int GetDisplayHeight();
    
-   void ShowMouseCursor();
+   void HideMouseCursor();
    
    // Send a message to terminate the application loop gracefully
    void GracefulShutdown();
