@@ -42,6 +42,8 @@ class PlayingState : public GameState
 public:
    PlayingState(const SharedState &state);
 
+   ~PlayingState() { Compatible::ShowMouseCursor(); }
+
 protected:
    virtual void Init();
    virtual void Update();

@@ -28,6 +28,7 @@ const static wstring InputKeySpecialDisabled = L"[no input device]";
 
 TitleState::~TitleState()
 {
+   Compatible::ShowMouseCursor();
    if (m_output_tile) delete m_output_tile;
    if (m_input_tile) delete m_input_tile;
    if (m_file_tile) delete m_file_tile;

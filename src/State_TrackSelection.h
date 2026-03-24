@@ -18,6 +18,7 @@ class TrackSelectionState : public GameState
 {
 public:
    TrackSelectionState(const SharedState &state);
+   ~TrackSelectionState() { Compatible::ShowMouseCursor(); }
 
 protected:
    virtual void Init();

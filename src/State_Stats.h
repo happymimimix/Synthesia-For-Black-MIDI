@@ -16,6 +16,8 @@ public:
       : m_state(state)
    { }
 
+   ~StatsState() { Compatible::ShowMouseCursor(); }
+
 protected:
    virtual void Init();
    virtual void Update();
