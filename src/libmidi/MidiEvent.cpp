@@ -114,11 +114,7 @@ void MidiEvent::ReadMeta(std::istream &stream)
          // The MIDI spec requires exactly 4 bytes for this event:
          // numerator, denominator (as power of 2), MIDI clocks per
          // metronome click, and 32nd notes per quarter note.
-         if (meta_length < 2 || meta_length >= 4)
-         {
-            delete[] buffer;
-            throw MidiError(MidiError_EventTooShort);
-         }
+         if (meta_length < 2 || meta_length > 4) throw MidiError(MidiError_EventTooShort);
 
          m_time_sig_numerator = static_cast<unsigned char>(buffer[0]);
 
