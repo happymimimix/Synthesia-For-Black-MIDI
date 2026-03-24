@@ -202,22 +202,22 @@ void Midi::BuildTempoTrack()
          size_t idx = i - 1;
          MidiEvent ev = t->Events()[idx];
          unsigned long ev_pulses = t->EventPulses()[idx];
- 
+
          bool is_tempo = (ev.Type() == MidiEventType_Meta && ev.MetaType() == MidiMetaEvent_TempoChange);
          bool is_timesig = (ev.Type() == MidiEventType_Meta && ev.MetaType() == MidiMetaEvent_TimeSignature);
- 
+
          if (!is_tempo && !is_timesig) continue;
- 
+
          if (is_tempo) tempo_events[ev_pulses] = ev;
          if (is_timesig) timesig_events[ev_pulses] = ev;
- 
+
          // Adjust next event's delta time before erasing
          if (idx + 1 < t->Events().size())
          {
             unsigned long next_dt = t->Events()[idx + 1].GetDeltaPulses();
             t->Events()[idx + 1].SetDeltaPulses(ev.GetDeltaPulses() + next_dt);
          }
- 
+
          t->Events().erase(t->Events().begin() + idx);
          t->EventPulses().erase(t->EventPulses().begin() + idx);
       }
