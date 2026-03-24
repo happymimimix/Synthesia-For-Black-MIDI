@@ -512,12 +512,12 @@ void KeyboardDisplay::SetKeyActive(const string &key_name, bool active, Track::T
       if (find_result != m_key_colors.end())
       {
          std::vector<Track::TrackColor> &colors = find_result->second;
-         // Find and remove the first instance of this color
-         for (std::vector<Track::TrackColor>::iterator color_it = colors.begin(); color_it != colors.end(); ++color_it)
+         // Find and remove the last instance of this color (matching Synthesia 0.8.x exactly)
+         for (std::vector<Track::TrackColor>::reverse_iterator color_it = colors.rbegin(); color_it != colors.rend(); ++color_it)
          {
             if (*color_it == color)
             {
-               colors.erase(color_it);
+               colors.erase(std::next(color_it).base());
                break;
             }
          }
