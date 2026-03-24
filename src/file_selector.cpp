@@ -61,8 +61,6 @@ static pascal Boolean NavOpenFilterProc(AEDesc *item, void *info, NavCallBackUse
 
 void RequestMidiFilename(std::wstring *returned_filename, std::wstring *returned_file_title)
 {
-   // The cursor might have been hidden.
-   ShowMouseCursor();
    // Grab the filename of the last song we played
    // and pre-load it into the open dialog
    wstring last_filename = UserSetting::Get(L"Last File", L"");
@@ -185,7 +183,6 @@ void RequestMidiFilename(std::wstring *returned_filename, std::wstring *returned
    NavDisposeReply(&navReply);
    
 #endif
-   HideMouseCursor();
 }
 
 void SetLastMidiFilename(const std::wstring &filename)

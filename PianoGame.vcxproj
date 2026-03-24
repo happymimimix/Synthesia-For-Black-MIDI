@@ -73,7 +73,7 @@
     <ClCompile Include="src\libmidi\SynthVolume.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MenuLayout.cpp" />
-    <ClCompile Include="src\PianoGameError.cpp" />
+    <ClCompile Include="src\SynthesiaError.cpp" />
     <ClCompile Include="src\registry.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\State_Playing.cpp" />
@@ -105,7 +105,7 @@
     <ClInclude Include="src\MenuLayout.h" />
     <ClInclude Include="src\os.h" />
     <ClInclude Include="src\os_graphics.h" />
-    <ClInclude Include="src\PianoGameError.h" />
+    <ClInclude Include="src\SynthesiaError.h" />
     <ClInclude Include="src\registry.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\resource.h" />

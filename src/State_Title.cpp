@@ -173,7 +173,9 @@ void TitleState::Update()
 
       std::wstring filename;
       std::wstring file_title;
+      Compatible::ShowMouseCursor();
       FileSelector::RequestMidiFilename(&filename, &file_title);
+      Compatible::HideMouseCursor();
 
       if (filename != L"")
       {

@@ -67,7 +67,7 @@ static const int WindowHeight = Compatible::GetDisplayHeight();
 GameStateManager state_manager(WindowWidth, WindowHeight);
 
 const static wstring application_name = L"SFBM";
-const static std::wstring friendly_app_name = WSTRING(L"Synthesia For Black MIDI " + PianoGameVersionString);
+const static std::wstring friendly_app_name = WSTRING(L"Synthesia For Black MIDI " + SynthesiaVersionString);
 
 const static wstring error_header1 = L"SFBM detected a";
 const static wstring error_header2 = L" problem and must close:\n\n";
@@ -224,7 +224,9 @@ int main(int argc, char *argv[])
          while (!midi)
          {
             std::wstring file_title;
+            Compatible::ShowMouseCursor();
             FileSelector::RequestMidiFilename(&command_line, &file_title);
+            Compatible::HideMouseCursor();
 
             if (command_line != L"")
             {

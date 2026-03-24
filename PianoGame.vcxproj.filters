@@ -33,9 +33,6 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="src\PianoGameError.cpp">
-      <Filter>Main</Filter>
-    </ClCompile>
     <ClCompile Include="src\Renderer.cpp">
       <Filter>Main\Graphics Support</Filter>
     </ClCompile>
@@ -102,6 +99,7 @@
     <ClCompile Include="src\FramedumpTile.cpp">
       <Filter>Main\State Support</Filter>
     </ClCompile>
+    <ClCompile Include="src\SynthesiaError.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\GameState.h">
@@ -114,9 +112,6 @@
       <Filter>Main</Filter>
     </ClInclude>
     <ClInclude Include="src\os_graphics.h">
-      <Filter>Main</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PianoGameError.h">
       <Filter>Main</Filter>
     </ClInclude>
     <ClInclude Include="src\version.h">
@@ -212,6 +207,7 @@
     <ClInclude Include="src\FramedumpTile.h">
       <Filter>Main\State Support</Filter>
     </ClInclude>
+    <ClInclude Include="src\SynthesiaError.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="license.txt">
