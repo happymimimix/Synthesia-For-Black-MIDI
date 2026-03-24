@@ -27,7 +27,8 @@ KeyboardDisplay::KeyboardDisplay(KeyboardSize size, int pixelWidth, int pixelHei
 
 void KeyboardDisplay::Draw(Renderer &renderer, const Tga *key_tex[4], const Tga *note_tex[4], int x, int y,
                            const TranslatedNoteSet &notes, microseconds_t show_duration, microseconds_t current_time,
-                           const std::vector<Track::Properties> &track_properties)
+                           const std::vector<Track::Properties> &track_properties,
+                           const std::vector<microseconds_t> &beat_lines, const std::vector<microseconds_t> &bar_lines)
 {
    // Source: Measured from Yamaha P-70
    const static double WhiteWidthHeightRatio = 6.8181818;
@@ -64,6 +65,7 @@ void KeyboardDisplay::Draw(Renderer &renderer, const Tga *key_tex[4], const Tga 
    enum { Rail, Shadow, BlackKey, WhiteKey };
 
    DrawGuides(renderer, white_key_count, white_width, white_space, x + x_offset, y, y_offset);
+   DrawMeasures(renderer, white_key_count, white_width, white_space, x + x_offset, y, y_offset, y_roll_under, show_duration, current_time, beat_lines, bar_lines);
 
    // Do two passes on the notes, the first for note shadows and the second
    // for the note blocks themselves.  This is to avoid shadows being drawn
@@ -324,6 +326,44 @@ void KeyboardDisplay::DrawGuides(Renderer &renderer, int key_count, int key_widt
       current_white++;
       if (current_white == 'H') current_white = 'A';
       if (current_white == 'C') current_octave++;
+   }
+}
+
+void KeyboardDisplay::DrawMeasures(Renderer &renderer, int key_count, int key_width, int key_space,
+                                   int x_offset, int y, int y_offset, int y_roll_under, microseconds_t show_duration, microseconds_t current_time,
+                                   const std::vector<microseconds_t> &beat_lines, const std::vector<microseconds_t> &bar_lines) const
+{
+   int keyboard_width = key_width*key_count + key_space*(key_count-1);
+
+   // These are the same colors used for the vertical key guides
+   const Color thick(Renderer::ToColor(0x48,0x48,0x48));
+   const Color thin(Renderer::ToColor(0x50,0x50,0x50));
+
+   const double scaling_factor = static_cast<double>(y_offset) / static_cast<double>(show_duration);
+   const long long roll_under = static_cast<int>(y_roll_under / scaling_factor);
+
+   // Draw beat lines (thin)
+   renderer.SetColor(thin);
+   for (size_t i = 0; i < beat_lines.size(); ++i)
+   {
+      if (beat_lines[i] < current_time - roll_under) continue;
+      if (beat_lines[i] > current_time + show_duration) break;
+
+      const long long adjusted = max(beat_lines[i] - current_time, -roll_under);
+      const int line_y = y - static_cast<int>(adjusted * scaling_factor) + y_offset;
+      renderer.DrawQuad(x_offset, line_y, keyboard_width, 1);
+   }
+
+   // Draw bar lines (thick, on top of beat lines)
+   renderer.SetColor(thick);
+   for (size_t i = 0; i < bar_lines.size(); ++i)
+   {
+      if (bar_lines[i] < current_time - roll_under) continue;
+      if (bar_lines[i] > current_time + show_duration) break;
+
+      const long long adjusted = max(bar_lines[i] - current_time, -roll_under);
+      const int line_y = y - static_cast<int>(adjusted * scaling_factor) + y_offset;
+      renderer.DrawQuad(x_offset, line_y - 1, keyboard_width, 2);
    }
 }
 
