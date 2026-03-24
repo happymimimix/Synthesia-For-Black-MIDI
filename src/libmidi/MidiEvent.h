@@ -1,4 +1,4 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
@@ -31,7 +31,7 @@ public:
    // NOTE: There is a VERY good chance you don't want to use this directly.
    // The only reason it's not private is because the standard containers
    // require a default constructor.
-   MidiEvent() : m_status(0), m_data1(0), m_data2(0), m_tempo_uspqn(0) { }
+   MidiEvent() : m_status(0), m_data1(0), m_data2(0), m_tempo_uspqn(0), m_time_sig_numerator(4), m_time_sig_denominator(4) { }
 
    // Returns true if the event could be expressed in a simple event.  (So, this will
    // return false for Meta and SysEx events.)
@@ -70,6 +70,13 @@ public:
    // per quarter note.  (Non-meta-tempo events will throw an error).
    unsigned long GetTempoInUsPerQn() const;
 
+   // Retrieve the time signature numerator (beats per bar) and
+   // denominator (beat unit, e.g. 4 = quarter note).  The
+   // denominator is stored already decoded from the power-of-2
+   // encoding used in the MIDI file.
+   unsigned char GetTimeSignatureNumerator() const { return m_time_sig_numerator; }
+   unsigned char GetTimeSignatureDenominator() const { return m_time_sig_denominator; }
+
    // Convenience function: Is this the special End-Of-Track event
    bool IsEnd() const;
 
@@ -104,6 +111,9 @@ private:
 
    unsigned long m_tempo_uspqn;
    std::string m_text;
+
+   unsigned char m_time_sig_numerator;
+   unsigned char m_time_sig_denominator;
 };
 
 

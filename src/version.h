@@ -1,13 +1,13 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
-#ifndef __PIANOGAME_VERSION_H
-#define __PIANOGAME_VERSION_H
+#ifndef __SYNTHESIA_VERSION_H
+#define __SYNTHESIA_VERSION_H
 
 #include <string>
 
 // See readme.txt for a list of what has changed between versions
-static const std::wstring PianoGameVersionString = L"v1.6.2";
+static const std::wstring SynthesiaVersionString = L"v1.6.2";
 
 #endif

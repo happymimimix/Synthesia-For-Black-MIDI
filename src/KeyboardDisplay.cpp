@@ -1,10 +1,10 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
 #include "KeyboardDisplay.h"
 #include "TrackProperties.h"
-#include "PianoGameError.h"
+#include "SynthesiaError.h"
 #include "string_util.h"
 
 #include "Renderer.h"
@@ -65,7 +65,7 @@ void KeyboardDisplay::Draw(Renderer &renderer, const Tga *key_tex[4], const Tga 
    enum { Rail, Shadow, BlackKey, WhiteKey };
 
    DrawGuides(renderer, white_key_count, white_width, white_space, x + x_offset, y, y_offset);
-   DrawMeasures(renderer, white_key_count, white_width, white_space, x + x_offset, y, y_offset, y_roll_under, show_duration, current_time, beat_lines, bar_lines);
+   DrawBeatLines(renderer, x + x_offset, y, y_offset, y_roll_under, final_width, show_duration, current_time, beat_lines, bar_lines);
 
    // Do two passes on the notes, the first for note shadows and the second
    // for the note blocks themselves.  This is to avoid shadows being drawn
@@ -99,7 +99,7 @@ int KeyboardDisplay::GetStartingOctave() const
    switch (m_size)
    {
    case KeyboardSize128: return StartingOctaveOn128;
-   default: throw PianoGameError(Error_BadPianoType);
+   default: throw SynthesiaError(Error_BadPianoType);
    }
 }
 
@@ -111,7 +111,7 @@ char KeyboardDisplay::GetStartingNote() const
    switch (m_size)
    {
    case KeyboardSize128: return StartingKeyOn128;
-   default: throw PianoGameError(Error_BadPianoType);
+   default: throw SynthesiaError(Error_BadPianoType);
    }
 }
 
@@ -123,7 +123,7 @@ int KeyboardDisplay::GetWhiteKeyCount() const
    switch (m_size)
    {
    case KeyboardSize128: return WhiteKeysOn128;
-   default: throw PianoGameError(Error_BadPianoType);
+   default: throw SynthesiaError(Error_BadPianoType);
    }
 }
 
@@ -329,12 +329,10 @@ void KeyboardDisplay::DrawGuides(Renderer &renderer, int key_count, int key_widt
    }
 }
 
-void KeyboardDisplay::DrawMeasures(Renderer &renderer, int key_count, int key_width, int key_space,
-                                   int x_offset, int y, int y_offset, int y_roll_under, microseconds_t show_duration, microseconds_t current_time,
-                                   const std::vector<microseconds_t> &beat_lines, const std::vector<microseconds_t> &bar_lines) const
+void KeyboardDisplay::DrawBeatLines(Renderer &renderer, int x_offset, int y, int y_offset, int y_roll_under,
+                                    int keyboard_width, microseconds_t show_duration, microseconds_t current_time,
+                                    const std::vector<microseconds_t> &beat_lines, const std::vector<microseconds_t> &bar_lines) const
 {
-   int keyboard_width = key_width*key_count + key_space*(key_count-1);
-
    // These are the same colors used for the vertical key guides
    const Color thick(Renderer::ToColor(0x48,0x48,0x48));
    const Color thin(Renderer::ToColor(0x50,0x50,0x50));
@@ -433,7 +431,7 @@ void KeyboardDisplay::DrawNotePass(Renderer &renderer, const Tga *tex_white, con
    switch (m_size)
    {
    case KeyboardSize128: keyboard_type_offset = 7 - WhiteNotesPerOctave; break;
-   default: throw PianoGameError(Error_BadPianoType);
+   default: throw SynthesiaError(Error_BadPianoType);
    }
 
    // This array describes how to "stack" notes in a single place.  The IsBlackNote array

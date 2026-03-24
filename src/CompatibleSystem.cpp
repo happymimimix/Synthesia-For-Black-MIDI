@@ -1,4 +1,4 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
@@ -24,7 +24,7 @@ namespace Compatible
 
    void ShowError(const std::wstring &err)
    {
-      const static std::wstring friendly_app_name = WSTRING(L"SFBM " + PianoGameVersionString);
+      const static std::wstring friendly_app_name = WSTRING(L"Synthesia For Black MIDI " + PianoGameVersionString);
       const static std::wstring message_box_title = WSTRING(friendly_app_name << L" Error");
       
 #ifdef WIN32
@@ -35,14 +35,14 @@ namespace Compatible
       DialogItemIndex item;
 
       // The cursor might have been hidden.
-      HideMouseCursor();
+      ShowMouseCursor();
 
       CreateStandardAlert(kAlertStopAlert, MacStringFromWide(message_box_title).get(), MacStringFromWide(err).get(), 0, &dialog);
       RunStandardAlert(dialog, 0, &item);
       
 #endif
    }
-   
+
    void HideMouseCursor()
    {
 #ifdef WIN32
@@ -51,6 +51,16 @@ namespace Compatible
       CGDisplayHideCursor(kCGDirectMainDisplay);
 #endif
    }
+   
+   void ShowMouseCursor()
+   {
+#ifdef WIN32
+      ShowCursor(true);
+#else
+      CGDisplayShowCursor(kCGDirectMainDisplay);
+#endif
+   }
+
 
    int GetDisplayWidth()
    {

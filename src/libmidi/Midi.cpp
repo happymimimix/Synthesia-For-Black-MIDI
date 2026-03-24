@@ -1,4 +1,4 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
@@ -136,6 +136,8 @@ Midi Midi::ReadFromStream(istream &stream)
    }
 
    m.BuildTempoTrack();
+   m.BuildTempoIndex(pulses_per_quarter_note);
+   m.BuildBeatLines(pulses_per_quarter_note);
 
    // Tell our tracks their IDs
    for (size_t i = 0; i < m.m_tracks.size(); ++i)
@@ -149,8 +151,12 @@ Midi Midi::ReadFromStream(istream &stream)
 
       MidiEventMicrosecondList event_usecs;
       const MidiEventPulsesList& event_pulses = m.m_tracks[i].EventPulses();
+
+      // Event pulses are sorted, so we can use the cursor-hint
+      // version for O(n + t) total instead of O(n log t).
+      size_t tempo_hint = 0;
       for (size_t j = 0; j < event_pulses.size(); ++j) {
-          event_usecs.push_back(m.GetEventPulseInMicroseconds(event_pulses[j], pulses_per_quarter_note));
+         event_usecs.push_back(m.GetEventPulseInMicroseconds(event_pulses[j], pulses_per_quarter_note, tempo_hint));
       }
       m.m_tracks[i].SetEventUsecs(event_usecs);
    }
@@ -174,6 +180,9 @@ Midi Midi::ReadFromStream(istream &stream)
 // This adds an extra track dedicated to tempo change events.  Tempo events
 // are extracted from every other track and placed in the new one.
 //
+// While we're at it, we also collect time signature events (without
+// extracting them) so BuildBeatLines can use them later.
+//
 // This allows quick(er) calculation of wall-clock event times
 void Midi::BuildTempoTrack()
 {
@@ -183,47 +192,43 @@ void Midi::BuildTempoTrack()
    // It also does sorting for us so we can just copy the
    // events right over to the new track.
    std::map<unsigned long, MidiEvent> tempo_events;
+   std::map<unsigned long, MidiEvent> timesig_events;
 
    // Run through each track looking for tempo events
    for (MidiTrackList::iterator t = m_tracks.begin(); t != m_tracks.end(); ++t)
    {
-      for (size_t i = 0; i < t->Events().size(); ++i)
+      for (size_t i = t->Events().size(); i > 0; --i)
       {
-         MidiEvent ev = t->Events()[i];
-         unsigned long ev_pulses = t->EventPulses()[i];
-
-         if (ev.Type() == MidiEventType_Meta && ev.MetaType() == MidiMetaEvent_TempoChange)
+         size_t idx = i - 1;
+         MidiEvent ev = t->Events()[idx];
+         unsigned long ev_pulses = t->EventPulses()[idx];
+ 
+         bool is_tempo = (ev.Type() == MidiEventType_Meta && ev.MetaType() == MidiMetaEvent_TempoChange);
+         bool is_timesig = (ev.Type() == MidiEventType_Meta && ev.MetaType() == MidiMetaEvent_TimeSignature);
+ 
+         if (!is_tempo && !is_timesig) continue;
+ 
+         if (is_tempo) tempo_events[ev_pulses] = ev;
+         if (is_timesig) timesig_events[ev_pulses] = ev;
+ 
+         // Adjust next event's delta time before erasing
+         if (idx + 1 < t->Events().size())
          {
-            // Pull tempo event out of both lists
-            //
-            // Vector is kind of a hassle this way -- we have to
-            // walk an iterator to that point in the list because
-            // erase MUST take an iterator... but erasing from a
-            // list invalidates iterators.  bleah.
-            MidiEventList::iterator event_to_erase = t->Events().begin();
-            MidiEventPulsesList::iterator event_pulse_to_erase = t->EventPulses().begin();
-            for (size_t j = 0; j < i; ++j) { ++event_to_erase; ++event_pulse_to_erase; }
-
-            t->Events().erase(event_to_erase);
-            t->EventPulses().erase(event_pulse_to_erase);
-
-            // Adjust next event's delta time
-            if (t->Events().size() > i)
-            {
-               // (We just erased the element at i, so
-               // now i is pointing to the next element)
-               unsigned long next_dt = t->Events()[i].GetDeltaPulses();
-
-               t->Events()[i].SetDeltaPulses(ev.GetDeltaPulses() + next_dt);
-            }
-
-            // We have to roll i back for the next loop around
-            --i;
-
-            // Insert our newly stolen event into the auto-sorting map
-            tempo_events[ev_pulses] = ev;
+            unsigned long next_dt = t->Events()[idx + 1].GetDeltaPulses();
+            t->Events()[idx + 1].SetDeltaPulses(ev.GetDeltaPulses() + next_dt);
          }
+ 
+         t->Events().erase(t->Events().begin() + idx);
+         t->EventPulses().erase(t->EventPulses().begin() + idx);
       }
+   }
+
+   // Store collected time signature data as parallel arrays
+   for (std::map<unsigned long, MidiEvent>::const_iterator i = timesig_events.begin(); i != timesig_events.end(); ++i)
+   {
+      m_timesig_pulse_marks.push_back(i->first);
+      m_timesig_numerators.push_back(i->second.GetTimeSignatureNumerator());
+      m_timesig_denominators.push_back(i->second.GetTimeSignatureDenominator());
    }
 
    // Create a new track (always the last track in the track list)
@@ -296,52 +301,147 @@ microseconds_t Midi::ConvertPulsesToMicroseconds(unsigned long pulses, microseco
    return static_cast<microseconds_t>(microseconds);
 }
 
-microseconds_t Midi::GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note) const
+// Builds a lookup table from the tempo track so that pulse-to-microsecond
+// conversion can be done with a binary search instead of a linear scan.
+// Each entry records the pulse position, cumulative wall-clock time, and
+// tempo value at that point.
+void Midi::BuildTempoIndex(unsigned short pulses_per_quarter_note)
 {
-   if (m_tracks.size() == 0) return 0;
+   m_tempo_ppqn = pulses_per_quarter_note;
+   m_tempo_pulse_marks.clear();
+   m_tempo_usec_marks.clear();
+   m_tempo_values.clear();
+
+   // The initial state before any tempo event: 120 BPM at pulse 0
+   m_tempo_pulse_marks.push_back(0);
+   m_tempo_usec_marks.push_back(0);
+   m_tempo_values.push_back(DefaultUSTempo);
+
+   if (m_tracks.size() == 0) return;
    const MidiTrack &tempo_track = m_tracks.back();
 
-   microseconds_t running_result = 0;
+   microseconds_t running_usec = 0;
+   unsigned long last_pulse = 0;
+   microseconds_t current_tempo = DefaultUSTempo;
 
-   bool hit = false;
-   unsigned long last_tempo_event_pulses = 0;
-   microseconds_t running_tempo = DefaultUSTempo;
    for (size_t i = 0; i < tempo_track.Events().size(); ++i)
    {
-      unsigned long tempo_event_pulses = tempo_track.EventPulses()[i];
+      unsigned long pulse = tempo_track.EventPulses()[i];
 
-      // If the time we're asking to convert is still beyond
-      // this tempo event, just add the last time slice (at
-      // the previous tempo) to the running wall-clock time.
-      unsigned long delta_pulses = 0;
-      if (event_pulses > tempo_event_pulses)
-      {
-         delta_pulses = tempo_event_pulses - last_tempo_event_pulses;
-      }
-      else
-      {
-         hit = true;
-         delta_pulses = event_pulses - last_tempo_event_pulses;
-      }
+      // Accumulate wall-clock time for the segment we just passed
+      running_usec += ConvertPulsesToMicroseconds(pulse - last_pulse, current_tempo, pulses_per_quarter_note);
 
-      running_result += ConvertPulsesToMicroseconds(delta_pulses, running_tempo, pulses_per_quarter_note);
+      current_tempo = tempo_track.Events()[i].GetTempoInUsPerQn();
+      last_pulse = pulse;
 
-      // If the time we're calculating is before the tempo event we're
-      // looking at, we're done.
-      if (hit) break;
-
-      running_tempo = tempo_track.Events()[i].GetTempoInUsPerQn();
-      last_tempo_event_pulses = tempo_event_pulses;
+      m_tempo_pulse_marks.push_back(pulse);
+      m_tempo_usec_marks.push_back(running_usec);
+      m_tempo_values.push_back(current_tempo);
    }
+}
 
-   // The requested time may be after the very last tempo event
-   if (!hit)
+// Walks through the entire song and generates beat and bar lines based
+// on time signature events collected during BuildTempoTrack.
+//
+// The resulting lists are sorted and stored in microseconds so the
+// display code can quickly find visible lines with a linear scan.
+void Midi::BuildBeatLines(unsigned short pulses_per_quarter_note)
+{
+   m_beat_lines.clear();
+   m_bar_lines.clear();
+
+   if (m_tracks.size() == 0) return;
+
+   // Find the last pulse in the song so we know when to stop
+   unsigned long last_pulse = 0;
+   for (size_t t = 0; t < m_tracks.size(); ++t)
    {
-      unsigned long remaining_pulses = event_pulses - last_tempo_event_pulses;
-      running_result += ConvertPulsesToMicroseconds(remaining_pulses, running_tempo, pulses_per_quarter_note);
+      if (m_tracks[t].EventPulses().size() > 0)
+      {
+         unsigned long p = m_tracks[t].EventPulses().back();
+         if (p > last_pulse) last_pulse = p;
+      }
    }
 
-   return running_result;
+   if (last_pulse == 0) return;
+
+   // Default time signature is 4/4
+   unsigned char numerator = 4;
+   unsigned char denominator = 4;
+
+   // "pulses per beat" depends on the denominator:
+   //    pulses_per_beat = ppqn * 4 / denominator
+   // This works because PPQN gives us pulses per quarter note,
+   // and (4 / denominator) scales to the actual beat unit.
+   unsigned long pulses_per_beat = pulses_per_quarter_note * 4 / denominator;
+
+   size_t next_timesig = 0;
+   size_t tempo_hint = 0;
+   unsigned long current_pulse = 0;
+   unsigned char beat_in_bar = 0;
+
+   while (current_pulse <= last_pulse)
+   {
+      // Check if we've reached a time signature change
+      if (next_timesig < m_timesig_pulse_marks.size() && current_pulse >= m_timesig_pulse_marks[next_timesig])
+      {
+         numerator = m_timesig_numerators[next_timesig];
+         denominator = m_timesig_denominators[next_timesig];
+
+         if (numerator == 0) numerator = 4;
+         if (denominator == 0) denominator = 4;
+
+         pulses_per_beat = pulses_per_quarter_note * 4 / denominator;
+         if (pulses_per_beat == 0) pulses_per_beat = pulses_per_quarter_note;
+
+         // Reset to beat 1 of the new time signature
+         beat_in_bar = 0;
+         current_pulse = m_timesig_pulse_marks[next_timesig];
+         ++next_timesig;
+      }
+
+      microseconds_t usec = GetEventPulseInMicroseconds(current_pulse, pulses_per_quarter_note, tempo_hint);
+
+      if (beat_in_bar == 0) m_bar_lines.push_back(usec);
+      else m_beat_lines.push_back(usec);
+
+      ++beat_in_bar;
+      if (beat_in_bar >= numerator) beat_in_bar = 0;
+
+      current_pulse += pulses_per_beat;
+   }
+}
+
+// Binary search version for single lookups.
+microseconds_t Midi::GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note) const
+{
+   if (m_tempo_pulse_marks.size() == 0) return 0;
+
+   // Binary search for the last tempo mark <= event_pulses.
+   // upper_bound returns the first element strictly greater,
+   // so we step back one to find the segment we're in.
+   std::vector<unsigned long>::const_iterator it = std::upper_bound(m_tempo_pulse_marks.begin(), m_tempo_pulse_marks.end(), event_pulses);
+   size_t seg = (it - m_tempo_pulse_marks.begin()) - 1;
+
+   unsigned long remaining_pulses = event_pulses - m_tempo_pulse_marks[seg];
+   return m_tempo_usec_marks[seg] + ConvertPulsesToMicroseconds(remaining_pulses, m_tempo_values[seg], pulses_per_quarter_note);
+}
+
+// Cursor-hint version for sorted (non-decreasing) pulse sequences.
+// The hint is advanced forward as needed, so converting an entire
+// sorted list costs O(n + t) total instead of O(n log t).
+microseconds_t Midi::GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note, size_t &hint) const
+{
+   if (m_tempo_pulse_marks.size() == 0) return 0;
+
+   // Advance the hint forward until we find the right segment
+   while (hint + 1 < m_tempo_pulse_marks.size() && m_tempo_pulse_marks[hint + 1] <= event_pulses)
+   {
+      ++hint;
+   }
+
+   unsigned long remaining_pulses = event_pulses - m_tempo_pulse_marks[hint];
+   return m_tempo_usec_marks[hint] + ConvertPulsesToMicroseconds(remaining_pulses, m_tempo_values[hint], pulses_per_quarter_note);
 }
 
 void Midi::Reset(microseconds_t lead_in_microseconds, microseconds_t lead_out_microseconds)

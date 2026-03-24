@@ -1,4 +1,4 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
@@ -170,7 +170,7 @@ void MidiCommIn::InputCallback(unsigned int msg, unsigned long p1, unsigned long
       // TODO: These appear in main.cpp too.  Consolidate them.
       const static wstring error_header1 = L"SFBM detected a";
       const static wstring error_header2 = L" problem and must close:\n\n";
-      const static wstring error_footer = L"\n";
+      const static wstring error_footer = L"\n\nIf you don't think this should have happened, please\ncontact Nicholas (nicholas@synthesiagame.com) and\ndescribe what you were doing when the problem\noccurred.  Thanks.";
 
       wstring wrapped_description = WSTRING(error_header1 << L" MIDI" << error_header2 << e.GetErrorDescription() << error_footer);
       Compatible::ShowError(wrapped_description);

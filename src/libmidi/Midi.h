@@ -1,4 +1,4 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
@@ -56,6 +56,12 @@ public:
    unsigned int AggregateNotesRemain() const;
    unsigned int AggregateNoteCount() const;
 
+   // These contain the microsecond positions of every beat line and
+   // bar line in the song, sorted in ascending order.  Bar lines land
+   // on beat 1 of each measure; beat lines land on every other beat.
+   const std::vector<microseconds_t> &BeatLines() const { return m_beat_lines; }
+   const std::vector<microseconds_t> &BarLines() const { return m_bar_lines; }
+
 private:
    const static unsigned long DefaultBPM = 120;
    const static microseconds_t OneMinuteInMicroseconds = 60000000;
@@ -63,19 +69,43 @@ private:
 
    static microseconds_t ConvertPulsesToMicroseconds(unsigned long pulses, microseconds_t tempo, unsigned short pulses_per_quarter_note);
 
-   Midi(): m_initialized(false), m_microsecond_dead_start_air(0) { Reset(0, 0); }
+   Midi(): m_initialized(false), m_microsecond_dead_start_air(0), m_tempo_ppqn(0) { Reset(0, 0); }
    
-   // This is O(n) where n is the number of tempo changes (across all tracks) in
-   // the song up to the specified time.  Tempo changes are usually a small number.
-   // (Almost always 0 or 1, going up to maybe 30-100 in rare cases.)
+   // Uses the pre-computed tempo index for O(log n) binary search.
    microseconds_t GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note) const;
+
+   // Cursor-hint version for converting sorted (non-decreasing) pulse
+   // sequences.  The hint is advanced linearly so that converting an
+   // entire sorted list costs O(n + t) total instead of O(n log t).
+   microseconds_t GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note, size_t &hint) const;
 
    unsigned long FindFirstNotePulse();
 
    void BuildTempoTrack();
+   void BuildTempoIndex(unsigned short pulses_per_quarter_note);
+   void BuildBeatLines(unsigned short pulses_per_quarter_note);
    void TranslateNotes(const NoteSet &notes, unsigned short pulses_per_quarter_note);
 
    bool m_initialized;
+
+   // Pre-computed lookup table for quick pulse-to-microsecond conversion.
+   // Each entry i describes a segment of constant tempo: the tempo is
+   // m_tempo_values[i] starting at pulse m_tempo_pulse_marks[i], which
+   // corresponds to wall-clock time m_tempo_usec_marks[i].
+   std::vector<unsigned long>  m_tempo_pulse_marks;
+   std::vector<microseconds_t> m_tempo_usec_marks;
+   std::vector<microseconds_t> m_tempo_values;
+   unsigned short m_tempo_ppqn;
+
+   // Time signature events collected during BuildTempoTrack, stored
+   // as parallel arrays sorted by pulse position.
+   std::vector<unsigned long>  m_timesig_pulse_marks;
+   std::vector<unsigned char>  m_timesig_numerators;
+   std::vector<unsigned char>  m_timesig_denominators;
+
+   // Pre-computed beat and bar line positions (in microseconds)
+   std::vector<microseconds_t> m_beat_lines;
+   std::vector<microseconds_t> m_bar_lines;
 
    TranslatedNoteSet m_translated_notes;
 

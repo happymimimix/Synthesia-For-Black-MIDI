@@ -1,4 +1,4 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
@@ -382,7 +382,7 @@ void TitleState::Draw(Renderer &renderer) const
    TextWriter version(Layout::ScreenMarginX, GetStateHeight() - Layout::ScreenMarginY - Layout::SmallFontSize * 2,
       renderer, false, Layout::SmallFontSize);
 
-   version << Text(WSTRING(L"SFBM " << PianoGameVersionString << "  |  " << "Note: Never load anything with more than 100mil notes in here! SFBM is not made to become the next Kiva or UMP. "), Gray);
+   version << Text(WSTRING(L"SFBM " << SynthesiaVersionString << "  |  " << "Note: Never load anything with more than 100mil notes in here! SFBM is not made to become the next Kiva or UMP. "), Gray);
 
    Layout::DrawHorizontalRule(renderer, GetStateWidth(), GetStateHeight() - Layout::ScreenMarginY);
 

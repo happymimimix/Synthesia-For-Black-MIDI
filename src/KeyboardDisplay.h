@@ -1,4 +1,4 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
@@ -88,8 +88,8 @@ private:
    void DrawGuides(Renderer &renderer, int key_count, int key_width, int key_space,
       int x_offset, int y, int y_offset) const;
 
-   void DrawMeasures(Renderer &renderer, int key_count, int key_width, int key_space,
-      int x_offset, int y, int y_offset, int y_roll_under microseconds_t show_duration, microseconds_t current_time,
+   void DrawBeatLines(Renderer &renderer, int x_offset, int y, int y_offset, int y_roll_under,
+      int keyboard_width, microseconds_t show_duration, microseconds_t current_time,
       const std::vector<microseconds_t> &beat_lines, const std::vector<microseconds_t> &bar_lines) const;
 
    void DrawNotePass(Renderer &renderer, const Tga *tex_white, const Tga *tex_black, int white_width,

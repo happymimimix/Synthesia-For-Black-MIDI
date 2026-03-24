@@ -1,4 +1,4 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
@@ -109,10 +109,29 @@ void MidiEvent::ReadMeta(std::istream &stream)
       break;
 
 
+   case MidiMetaEvent_TimeSignature:
+      {
+         // The MIDI spec requires exactly 4 bytes for this event:
+         // numerator, denominator (as power of 2), MIDI clocks per
+         // metronome click, and 32nd notes per quarter note.
+         if (meta_length < 2 || meta_length >= 4)
+         {
+            delete[] buffer;
+            throw MidiError(MidiError_EventTooShort);
+         }
+
+         m_time_sig_numerator = static_cast<unsigned char>(buffer[0]);
+
+         // Denominator is stored as a power of 2 (0=whole, 1=half,
+         // 2=quarter, 3=eighth).  We decode it right away.
+         unsigned char denom_power = static_cast<unsigned char>(buffer[1]);
+         m_time_sig_denominator = static_cast<unsigned char>(1 << denom_power);
+      }
+      break;
+
    case MidiMetaEvent_SequenceNumber:
    case MidiMetaEvent_EndOfTrack:
    case MidiMetaEvent_SMPTEOffset:
-   case MidiMetaEvent_TimeSignature:
    case MidiMetaEvent_KeySignature:
    case MidiMetaEvent_Proprietary:
 

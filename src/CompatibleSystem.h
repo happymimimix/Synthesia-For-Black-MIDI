@@ -1,4 +1,4 @@
-
+// Synthesia
 // Copyright (c)2007 Nicholas Piegdon
 // See license.txt for license information
 
@@ -20,6 +20,7 @@ namespace Compatible
    int GetDisplayHeight();
    
    void HideMouseCursor();
+   void ShowMouseCursor();
    
    // Send a message to terminate the application loop gracefully
    void GracefulShutdown();
