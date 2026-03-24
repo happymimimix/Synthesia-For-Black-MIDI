@@ -1,3 +1,7 @@
 [submodule "Z/X"]
 	path = RCE/modules/Z
 	url = https://github.com/happymimimix/SFBM-RCE.git
+[submodule "RCE/scripts"]
+	path = GITLNK/modules/RCE
+	url = https://github.com/happymimimix/SFBM-RCE.git
+	ignore = all
