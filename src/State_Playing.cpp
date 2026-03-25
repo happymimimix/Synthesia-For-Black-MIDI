@@ -103,7 +103,7 @@ void PlayingState::Init()
    {
       if (m_state.track_properties[i].mode == Track::ModeYouPlay)
       {
-         m_look_ahead_you_play_note_count += m_state.midi->Tracks()[i].Notes().size();
+         m_look_ahead_you_play_note_count += m_state.midi->Tracks()[i].AggregateNoteCount();
          m_any_you_play_tracks = true;
       }
    }

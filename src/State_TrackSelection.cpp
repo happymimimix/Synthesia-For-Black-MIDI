@@ -31,7 +31,7 @@ void TrackSelectionState::Init()
    int track_count = 0;
    for (size_t i = 0; i < m.Tracks().size(); ++i)
    {
-      if (m.Tracks()[i].Notes().size()) track_count++;
+      if (m.Tracks()[i].hasNotes()) track_count++;
    }
 
    m_back_button = ButtonState(Layout::ScreenMarginX,
@@ -75,7 +75,7 @@ void TrackSelectionState::Init()
    for (size_t i = 0; i < m.Tracks().size(); ++i)
    {
       const MidiTrack &t = m.Tracks()[i];
-      if (t.Notes().size() == 0) continue;
+      if (!t.hasNotes()) continue;
 
       int x = global_x_offset + (TrackTileWidth + Layout::ScreenMarginX)*tiles_on_this_line;
       int y = current_y;

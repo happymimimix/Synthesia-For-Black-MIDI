@@ -106,7 +106,7 @@ void TrackTile::Draw(Renderer &renderer, const Midi *midi, Tga *buttons, Tga *bo
    TextWriter instrument(95, 12, renderer, false, 14);
    instrument << track.InstrumentName();
    TextWriter note_count(95, 33, renderer, false, 14);
-   note_count << static_cast<const unsigned int>(track.Notes().size());
+   note_count << track.AggregateNoteCount();
 
    int color_offset = GraphicHeight * static_cast<int>(m_color);
    if (gray_out_buttons) color_offset = GraphicHeight * Track::UserSelectableColorCount;

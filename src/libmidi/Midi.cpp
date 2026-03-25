@@ -139,16 +139,22 @@ Midi Midi::ReadFromStream(istream &stream)
    m.BuildTempoIndex(pulses_per_quarter_note);
    m.BuildBeatLines(pulses_per_quarter_note);
 
-   // Tell our tracks their IDs
+   // Build, translate, and free each track's NoteSet one at a time.
+   // This way only one track's NoteSet is in memory at any moment.
    for (size_t i = 0; i < m.m_tracks.size(); ++i)
    {
+      m.m_tracks[i].BuildNoteSet();
       m.m_tracks[i].SetTrackId(i);
 
-   // Translate each track's list of notes and list
-   // of events into microseconds.
+      // Translate each track's list of notes and list
+      // of events into microseconds.
 
       m.TranslateNotes(m.m_tracks[i].Notes(), pulses_per_quarter_note);
 
+      // Free this track's NoteSet immediately — it's no longer needed.
+      m.m_tracks[i].ClearNoteSet();
+
+      // Translate event pulses into microseconds.
       MidiEventMicrosecondList event_usecs;
       const MidiEventPulsesList& event_pulses = m.m_tracks[i].EventPulses();
 

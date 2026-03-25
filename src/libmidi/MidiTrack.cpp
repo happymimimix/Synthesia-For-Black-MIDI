@@ -65,7 +65,6 @@ MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
       t.m_event_pulses.push_back(current_pulse_count);
    }
 
-   t.BuildNoteSet();
    t.DiscoverInstrument();
 
    return t;
@@ -145,6 +144,8 @@ void MidiTrack::BuildNoteSet()
       // promiscuous MIDI files.  As-is, a note just won't be
       // inserted if it isn't closed properly.
    }
+
+   m_note_count = static_cast<unsigned int>(m_note_set.size());
 }
 
 void MidiTrack::DiscoverInstrument()
@@ -220,7 +221,7 @@ void MidiTrack::Reset()
    m_running_microseconds = 0;
    m_last_event = -1;
 
-   m_notes_remaining = static_cast<unsigned int>(m_note_set.size());
+   m_notes_remaining = m_note_count;
 }
 
 MidiEventList MidiTrack::Update(microseconds_t delta_microseconds)

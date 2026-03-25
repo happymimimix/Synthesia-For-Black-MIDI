@@ -43,7 +43,7 @@ public:
 
    // Reports whether this track contains any Note-On MIDI events
    // (vs. just being an information track with a title or copyright)
-   bool hasNotes() const { return (m_note_set.size() > 0); }
+   bool hasNotes() const { return (m_note_count > 0); }
 
    void Reset();
    MidiEventList Update(microseconds_t delta_microseconds);
@@ -52,12 +52,19 @@ public:
    unsigned int AggregateEventCount() const { return static_cast<unsigned int>(m_events.size()); }
 
    unsigned int AggregateNotesRemain() const { return m_notes_remaining; }
-   unsigned int AggregateNoteCount() const { return static_cast<unsigned int>(m_note_set.size()); }
+   unsigned int AggregateNoteCount() const { return m_note_count; }
+
+   // Free the per-track NoteSet after translation to save memory.
+   // The cached m_note_count is preserved for queries.
+   void ClearNoteSet() { m_note_set.clear(); }
+
+   // Build note set from events. Called during translation phase
+   // rather than during loading to reduce peak memory usage.
+   void BuildNoteSet();
 
 private:
-   MidiTrack() : m_instrument_id(0) { Reset(); }
+   MidiTrack() : m_instrument_id(0), m_note_count(0) { Reset(); }
 
-   void BuildNoteSet();
    void DiscoverInstrument();
 
    MidiEventList m_events;
@@ -65,6 +72,7 @@ private:
    MidiEventMicrosecondList m_event_usecs;
 
    NoteSet m_note_set;
+   unsigned int m_note_count;
 
    int m_instrument_id;
 
