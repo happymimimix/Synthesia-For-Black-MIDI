@@ -81,7 +81,7 @@ void PlayingState::Init()
    if (m_state.framedump) {
       //Running ffmpeg
       char buf[1024] = {};
-      snprintf(buf, sizeof(buf), "%s&cd \"%s\"&md \"%s\\SFBM_Framedump\"&start cmd /k ffmpeg -r 60 -f rawvideo -s %dx%d -pix_fmt bgra -i async:\\\\.\\pipe\\sfbmdump -c:v h264 -qp 19 -pix_fmt yuv420p -vf vflip \"%s\\SFBM_Framedump\\Output.mp4\"", GetExePath().substr(0, 2).c_str(), GetExePath().c_str(), GetExePath().c_str(), GetStateWidth(), GetStateHeight(), GetExePath().c_str());
+      snprintf(buf, sizeof(buf), "%s&cd \"%s\"&md \"%s\\SFBM_Framedump\"&start cmd /k ffmpeg -r 60 -f rawvideo -s %dx%d -pix_fmt rgba -i async:\\\\.\\pipe\\sfbmdump -c:v h264 -qp 19 -pix_fmt yuv420p -vf vflip \"%s\\SFBM_Framedump\\Output.mp4\"", GetExePath().substr(0, 2).c_str(), GetExePath().c_str(), GetExePath().c_str(), GetStateWidth(), GetStateHeight(), GetExePath().c_str());
       system(buf);
       m_framedump_handle = CreateNamedPipe(TEXT("\\\\.\\pipe\\sfbmdump"),
          PIPE_ACCESS_OUTBOUND,
@@ -557,8 +557,9 @@ void PlayingState::Draw(Renderer &renderer) const
       combo_text << WSTRING(m_current_combo << L" Combo!");
    }
    if (m_state.framedump && !m_paused) {
-      glReadPixels(0, 0, GetStateWidth(), GetStateHeight(), GL_BGRA_EXT, GL_UNSIGNED_BYTE, m_framedump_fb);
-      WriteFile(m_framedump_handle, m_framedump_fb, static_cast<DWORD>(GetStateWidth() * GetStateHeight() * 4), nullptr, nullptr);
+      glReadPixels(0, 0, GetStateWidth(), GetStateHeight(), GL_RGBA, GL_UNSIGNED_BYTE, m_framedump_fb);
+      DWORD bytesWritten; // We never actually use it but Windows 7 requires it. 
+      WriteFile(m_framedump_handle, m_framedump_fb, static_cast<DWORD>(GetStateWidth() * GetStateHeight() * 4), &bytesWritten, nullptr);
    }
 }
 
