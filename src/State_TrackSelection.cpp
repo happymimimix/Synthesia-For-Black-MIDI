@@ -72,7 +72,7 @@ void TrackSelectionState::Init()
    int tiles_on_this_line = 0;
    int tiles_on_this_page = 0;
    int current_y = starting_y;
-   for (size_t i = 0; i < m.Tracks().size(); ++i)
+   for (unsigned short i = 0; i < static_cast<unsigned short>(m.Tracks().size()); ++i)
    {
       const MidiTrack &t = m.Tracks()[i];
       if (!t.hasNotes()) continue;
@@ -237,7 +237,7 @@ void TrackSelectionState::Update()
             // Find the first note in this track so we can skip right to the good part.
             microseconds_t additional_time = -PreviewLeadIn;
             const MidiTrack &track = m_state.midi->Tracks()[m_preview_track_id];
-            for (size_t i = 0; i < track.Events().size(); ++i)
+            for (unsigned short i = 0; i < static_cast<unsigned short>(track.Events().size()); ++i)
             {
                const MidiEvent &ev = track.Events()[i];
                if (ev.Type() == MidiEventType_NoteOn && ev.NoteVelocity() > 0)

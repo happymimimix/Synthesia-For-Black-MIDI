@@ -21,8 +21,13 @@ enum KeyboardSize
    KeyboardSize256
 };
 
+struct KeyActivation
+{
+    Track::TrackColor KeyColor;
+    bool UserTriggered;
+};
 
-typedef std::unordered_map<std::string, std::vector<Track::TrackColor>> KeyColors;
+typedef std::unordered_map<std::string, std::vector<KeyActivation>> KeyColors;
 
 class Renderer;
 class Tga;
@@ -39,7 +44,7 @@ public:
       const std::vector<Track::Properties> &track_properties,
       const std::vector<microseconds_t> &beat_lines, const std::vector<microseconds_t> &bar_lines);
 
-   void SetKeyActive(const std::string &key_name, bool active, Track::TrackColor color);
+   void SetKeyActive(const std::string &key_name, bool active, Track::TrackColor KeyColor, bool UserTriggered = false);
 
    void ResetActiveKeys() { m_key_colors.clear(); }
 

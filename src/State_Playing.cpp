@@ -223,7 +223,7 @@ void PlayingState::Listen()
             break;
          }
 
-         m_keyboard->SetKeyActive(note_name, false, Track::FlatGray);
+         m_keyboard->SetKeyActive(note_name, false, Track::FlatGray, true);
          continue;
       }
 
@@ -280,7 +280,15 @@ void PlayingState::Listen()
          if (m_state.midi_out) m_state.midi_out->Write(ev);
 
          // Adjust our statistics
-         const static double NoteValue = 100.0;
+         double time_diff = static_cast<double>(std::abs(cur_time - closest_match->start));
+         double accuracy = 1.0 - time_diff / (static_cast<double>(KeyboardDisplay::NoteWindowLength) / 2);
+         double tier_multiplier = 0.00;
+         if (accuracy > 0.9)  tier_multiplier = 1.15;
+         else if (accuracy > 0.75) tier_multiplier = 1.10;
+         else if (accuracy > 0.4) tier_multiplier = 1.05;
+         else if (accuracy > 0.3) tier_multiplier = 1.00;
+         else if (accuracy > 0.1) tier_multiplier = 0.95;
+         const double NoteValue = tier_multiplier * 100.0;
          m_state.stats.score += NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
 
          m_state.stats.notes_user_could_have_played++;
@@ -290,11 +298,7 @@ void PlayingState::Listen()
          m_current_combo++;
          m_state.stats.longest_combo = max(m_current_combo, m_state.stats.longest_combo);
 
-         TranslatedNote replacement = *closest_match;
-         replacement.state = UserHit;
-         
-         m_notes.erase(closest_match);
-         m_notes.insert(replacement);
+         const_cast<TranslatedNote&>(*closest_match).state = UserHit;
       }
       else
       {
@@ -302,7 +306,7 @@ void PlayingState::Listen()
       }
 
       m_state.stats.total_notes_user_pressed++;
-      m_keyboard->SetKeyActive(note_name, true, note_color);
+      m_keyboard->SetKeyActive(note_name, true, note_color, true);
    }
 }
 
@@ -339,31 +343,14 @@ void PlayingState::Update()
 
       if (m_state.midi_in && note->state == UserPlayable && window_end <= cur_time)
       {
-         TranslatedNote note_copy = *note;
-         note_copy.state = UserMissed;
-         
-         m_notes.erase(note);
-         m_notes.insert(note_copy);
-         
-         // Re-connect the (now-invalid) iterator to the replacement
-         note = m_notes.find(note_copy);
+         const_cast<TranslatedNote&>(*note).state = UserMissed;
       }
 
-      if (note->start > cur_time) break;
-
-      if (note->end < cur_time && window_end < cur_time)
-      {
-         if (m_state.midi_in) {
-         if (note->state == UserMissed)
-         {
-            // They missed a note, reset the combo counter
-            m_current_combo = 0;
-
-            m_state.stats.notes_user_could_have_played++;
-            m_state.stats.speed_integral += m_state.song_speed;
-         }
-         } else if (i->state == UserPlayable) {
-         const static double NoteValue = 100.0;
+      if (note->start > cur_time) { break; }
+      else if (!m_state.midi_in && note->state == UserPlayable) {
+         // Let's assume all notes are perfect when there's no midi input device.
+         
+         const static double NoteValue = 115.0; // Maximum possible score
          m_state.stats.score += NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
 
          m_state.stats.notes_user_could_have_played++;
@@ -373,7 +360,19 @@ void PlayingState::Update()
          m_current_combo++;
          m_state.stats.longest_combo = max(m_current_combo, m_state.stats.longest_combo);
 
+         const_cast<TranslatedNote&>(*note).state = UserHit;
          m_state.stats.total_notes_user_pressed++;
+      }
+
+      if (note->end < cur_time && window_end < cur_time)
+      {
+         if (m_state.midi_in && note->state == UserMissed)
+         {
+            // They missed a note, reset the combo counter.
+            m_current_combo = 0;
+
+            m_state.stats.notes_user_could_have_played++;
+            m_state.stats.speed_integral += m_state.song_speed;
          }
          m_notes.erase(note);
       }

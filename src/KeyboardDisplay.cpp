@@ -172,7 +172,7 @@ void KeyboardDisplay::DrawWhiteKeys(Renderer &renderer, const Tga *tex, bool act
       bool active = (find_result != m_key_colors.end() && !find_result->second.empty());
 
       Color c = white;
-      if (active) c = Track::ColorNoteWhite[find_result->second.back()];
+      if (active) c = Track::ColorNoteWhite[find_result->second.back().KeyColor];
 
       if ((active_only && active) || !active_only)
       {
@@ -243,7 +243,7 @@ void KeyboardDisplay::DrawBlackKeys(Renderer &renderer, const Tga *tex, bool act
             // texture we use this value (which doesn't make any sense in this context)
             // as the default "Black" color.
             Track::TrackColor c = Track::MissedNote;
-            if (active) c = find_result->second.back();
+            if (active) c = find_result->second.back().KeyColor;
 
             if (!active_only || (active_only && active))
             {
@@ -508,26 +508,38 @@ void KeyboardDisplay::DrawNotePass(Renderer &renderer, const Tga *tex_white, con
    }
 }
 
-void KeyboardDisplay::SetKeyActive(const string &key_name, bool active, Track::TrackColor color)
+void KeyboardDisplay::SetKeyActive(const string &key_name, bool active, Track::TrackColor KeyColor, bool UserTriggered)
 {
-   if (active) m_key_colors[key_name].push_back(color);
+   if (active)
+   {
+      KeyActivation entry;
+      entry.KeyColor = KeyColor;
+      entry.UserTriggered = UserTriggered;
+      m_key_colors[key_name].push_back(entry);
+   }
    else
    {
       KeyColors::iterator find_result = m_key_colors.find(key_name);
       if (find_result != m_key_colors.end())
       {
-         std::vector<Track::TrackColor> &colors = find_result->second;
+         std::vector<KeyActivation>& entries = find_result->second;
          // Find and remove the last instance of this color (matching Synthesia 0.8.x exactly)
-         for (std::vector<Track::TrackColor>::reverse_iterator color_it = colors.rbegin(); color_it != colors.rend(); ++color_it)
+         bool Found = false;
+         for (std::vector<KeyActivation>::const_iterator color_it = entries.end(); color_it != entries.begin();)
          {
-            if (*color_it == color)
+            color_it--;
+            if ((color_it->UserTriggered && UserTriggered) || color_it->KeyColor == KeyColor)
             {
-               colors.erase(std::next(color_it).base());
+               entries.erase(color_it);
+               Found = true;
                break;
             }
          }
-         // If vector is now empty, remove the key entry entirely
-         if (colors.empty())
+         if (!Found) {
+            // If we found nothing, just remove the last entry.
+            entries.pop_back();
+         }
+         if (entries.empty())
          {
             m_key_colors.erase(find_result);
          }
