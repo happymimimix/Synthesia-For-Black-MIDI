@@ -29,8 +29,8 @@ static constexpr unsigned long FRAME_DELAYS[3] = { 17, 17, 16 };
 
 void PlayingState::SetupNoteState()
 {
-   // Modify state in-place. The state field does not participate in
-   // set ordering, so this is safe and avoids a full copy (~65 GB).
+   // The state field doesn't affect ordering, so we can
+   // just change it directly instead of rebuilding the set.
    for (TranslatedNoteSet::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
    {
       TranslatedNote &n = const_cast<TranslatedNote&>(*i);

@@ -96,59 +96,6 @@ std::wstring MidiError::GetErrorDescription() const
    }
 }
 
-std::wstring GetMidiEventTypeDescription(MidiEventType type)
-{
-   switch (type)
-   {
-   case MidiEventType_Meta:             return L"Meta";
-   case MidiEventType_SysEx:            return L"System Exclusive";
-
-   case MidiEventType_NoteOff:          return L"Note-Off";
-   case MidiEventType_NoteOn:           return L"Note-On";
-   case MidiEventType_Aftertouch:       return L"Aftertouch";
-   case MidiEventType_Controller:       return L"Controller";
-   case MidiEventType_ProgramChange:    return L"Program Change";
-   case MidiEventType_ChannelPressure:  return L"Channel Pressure";
-   case MidiEventType_PitchWheel:       return L"Pitch Wheel";
-
-   case MidiEventType_Unknown:          return L"Unknown";
-   default:                             return L"BAD EVENT TYPE";
-   }
-
-}
-
-std::wstring GetMidiMetaEventTypeDescription(MidiMetaEventType type)
-{
-   switch (type)
-   {
-   case MidiMetaEvent_SequenceNumber:   return L"Sequence Number";
-
-   case MidiMetaEvent_Text:             return L"Text";
-   case MidiMetaEvent_Copyright:        return L"Copyright";
-   case MidiMetaEvent_TrackName:        return L"Track Name";
-   case MidiMetaEvent_Instrument:       return L"Instrument";
-   case MidiMetaEvent_Lyric:            return L"Lyric";
-   case MidiMetaEvent_Marker:           return L"Marker";
-   case MidiMetaEvent_Cue:              return L"Cue Point";
-   case MidiMetaEvent_PatchName:        return L"Patch Name";
-   case MidiMetaEvent_DeviceName:       return L"Device Name";
-
-   case MidiMetaEvent_EndOfTrack:       return L"End Of Track";
-   case MidiMetaEvent_TempoChange:      return L"Tempo Change";
-   case MidiMetaEvent_SMPTEOffset:      return L"SMPTE Offset";
-   case MidiMetaEvent_TimeSignature:    return L"Time Signature";
-   case MidiMetaEvent_KeySignature:     return L"Key Signature";
-
-   case MidiMetaEvent_Proprietary:      return L"Proprietary";
-
-   case MidiMetaEvent_ChannelPrefix:    return L"(Deprecated) Channel Prefix";
-   case MidiMetaEvent_MidiPort:         return L"(Deprecated) MIDI Port";
-
-   case MidiMetaEvent_Unknown:          return L"Unknown Meta Event Type";
-   default:                             return L"BAD META EVENT TYPE";
-   }
-}
-
 std::wstring const InstrumentNames[InstrumentCount] = {
    L"Acoustic Grand Piano",
    L"Bright Acoustic Piano",

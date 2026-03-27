@@ -29,8 +29,6 @@ public:
    bool Hit() const { return whole_tile.hit; }
 
    void SetString(const std::wstring &s) { m_string = s; }
-   void SetTitle(const std::wstring &s) { m_title = s; }
-
    const ButtonState WholeTile() const { return whole_tile; }
 
 private:
@@ -40,8 +38,6 @@ private:
    Tga *m_graphics;
 
    std::wstring m_string;
-   std::wstring m_title;
-
    ButtonState whole_tile;
 };
 

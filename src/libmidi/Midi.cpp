@@ -62,17 +62,15 @@ Midi Midi::ReadFromStream(istream &stream)
    unsigned short track_count;
    unsigned short time_division;
 
-   stream.read(header_id, 4);
+   stream.read(header_id, static_cast<streamsize>(MidiFileHeader.length()));
    string header(header_id);
    if (header != MidiFileHeader)
    {
       if (header != RiffFileHeader) throw MidiError(MidiError_UnknownHeaderType);
       else
       {
-         // There's no way this could be wong, so let's just skip it.
-         unsigned long throw_away;
-         stream.read(reinterpret_cast<char*>(&throw_away), sizeof(unsigned long) * 4);
-
+         // We know how to support RIFF files
+         stream.seekg(sizeof(unsigned long) * 4, std::ios_base::cur);
          // Call this recursively, without the RIFF header this time
          return ReadFromStream(stream);
       }
@@ -139,25 +137,24 @@ Midi Midi::ReadFromStream(istream &stream)
    m.BuildTempoIndex(pulses_per_quarter_note);
    m.BuildBeatLines(pulses_per_quarter_note);
 
-   // Build, translate, and free each track's NoteSet one at a time.
-   // This way only one track's NoteSet is in memory at any moment.
+   // Translate each track's list of notes and list
+   // of events into microseconds.
    for (unsigned short i = 0; i < static_cast<unsigned short>(m.m_tracks.size()); ++i)
    {
       m.m_tracks[i].BuildNoteSet();
 
       m.TranslateNotes(m.m_tracks[i].Notes(), pulses_per_quarter_note, i);
-
-      // Free this track's NoteSet immediately — it's no longer needed.
+      // We're done with this track's NoteSet now
       m.m_tracks[i].ClearNoteSet();
 
       // Translate event pulses into microseconds.
-      MidiEventMicrosecondList event_usecs;
-      const MidiEventPulsesList& event_pulses = m.m_tracks[i].EventPulses();
-
-      // Event pulses are sorted, so we can use the cursor-hint
-      // version for O(n + t) total instead of O(n log t).
+      // The pulses are already sorted, so we can use the hint
+      // overload and breeze through the whole list.
       size_t tempo_hint = 0;
-      for (size_t j = 0; j < event_pulses.size(); ++j) {
+      const MidiEventPulsesList& event_pulses = m.m_tracks[i].EventPulses();
+      MidiEventMicrosecondList event_usecs;
+      for (size_t j = 0; j < event_pulses.size(); ++j)
+      {
          event_usecs.push_back(m.GetEventPulseInMicroseconds(event_pulses[j], pulses_per_quarter_note, tempo_hint));
       }
       m.m_tracks[i].SetEventUsecs(event_usecs);
@@ -171,8 +168,8 @@ Midi Midi::ReadFromStream(istream &stream)
    // Eat everything up until *just* before the first note event
    m.m_microsecond_dead_start_air = m.GetEventPulseInMicroseconds(m.FindFirstNotePulse(), pulses_per_quarter_note) - 1;
 
-   // Free data that is only needed during loading/translation.
-   // Tempo index - only used by GetEventPulseInMicroseconds during translation
+   // None of this is needed during playback, so we might as well
+   // give back the memory now.
    std::vector<unsigned long>().swap(m.m_tempo_pulse_marks);
    std::vector<microseconds_t>().swap(m.m_tempo_usec_marks);
    std::vector<microseconds_t>().swap(m.m_tempo_values);
@@ -307,10 +304,9 @@ microseconds_t Midi::ConvertPulsesToMicroseconds(unsigned long pulses, microseco
    return static_cast<microseconds_t>(microseconds);
 }
 
-// Builds a lookup table from the tempo track so that pulse-to-microsecond
-// conversion can be done with a binary search instead of a linear scan.
-// Each entry records the pulse position, cumulative wall-clock time, and
-// tempo value at that point.
+// Pre-compute a lookup table from the tempo track so we can convert
+// pulses to microseconds without walking the whole event list each time.
+// (We just store the running wall-clock time at each tempo change.)
 void Midi::BuildTempoIndex(unsigned short pulses_per_quarter_note)
 {
    m_tempo_ppqn = pulses_per_quarter_note;
@@ -318,7 +314,7 @@ void Midi::BuildTempoIndex(unsigned short pulses_per_quarter_note)
    m_tempo_usec_marks.clear();
    m_tempo_values.clear();
 
-   // The initial state before any tempo event: 120 BPM at pulse 0
+   // Start with the default tempo (120 BPM) at the very beginning
    m_tempo_pulse_marks.push_back(0);
    m_tempo_usec_marks.push_back(0);
    m_tempo_values.push_back(DefaultUSTempo);
@@ -346,11 +342,10 @@ void Midi::BuildTempoIndex(unsigned short pulses_per_quarter_note)
    }
 }
 
-// Walks through the entire song and generates beat and bar lines based
-// on time signature events collected during BuildTempoTrack.
-//
-// The resulting lists are sorted and stored in microseconds so the
-// display code can quickly find visible lines with a linear scan.
+// Walk through the entire song tick-by-tick and drop a beat or bar
+// line at each position.  Time signature changes are handled along
+// the way.  We store the results in microseconds so the display
+// code doesn't have to bother with pulse conversion later.
 void Midi::BuildBeatLines(unsigned short pulses_per_quarter_note)
 {
    m_beat_lines.clear();
@@ -418,14 +413,14 @@ void Midi::BuildBeatLines(unsigned short pulses_per_quarter_note)
    }
 }
 
-// Binary search version for single lookups.
+// The tempo index we built earlier means we can jump straight to the
+// right segment instead of walking through the whole tempo track.
 microseconds_t Midi::GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note) const
 {
    if (m_tempo_pulse_marks.size() == 0) return 0;
 
-   // Binary search for the last tempo mark <= event_pulses.
-   // upper_bound returns the first element strictly greater,
-   // so we step back one to find the segment we're in.
+   // Find the segment we're in.  upper_bound gives us the first
+   // entry past our target, so we step back one.
    std::vector<unsigned long>::const_iterator it = std::upper_bound(m_tempo_pulse_marks.begin(), m_tempo_pulse_marks.end(), event_pulses);
    size_t seg = (it - m_tempo_pulse_marks.begin()) - 1;
 
@@ -433,14 +428,14 @@ microseconds_t Midi::GetEventPulseInMicroseconds(unsigned long event_pulses, uns
    return m_tempo_usec_marks[seg] + ConvertPulsesToMicroseconds(remaining_pulses, m_tempo_values[seg], pulses_per_quarter_note);
 }
 
-// Cursor-hint version for sorted (non-decreasing) pulse sequences.
-// The hint is advanced forward as needed, so converting an entire
-// sorted list costs O(n + t) total instead of O(n log t).
+// When we know the pulses are coming in sorted order, we can just
+// pick up where we left off.  Most of the time the hint is already
+// pointing at the right segment and we don't have to move at all.
 microseconds_t Midi::GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note, size_t &hint) const
 {
    if (m_tempo_pulse_marks.size() == 0) return 0;
 
-   // Advance the hint forward until we find the right segment
+   // Scoot the hint forward if we've passed into the next segment
    while (hint + 1 < m_tempo_pulse_marks.size() && m_tempo_pulse_marks[hint + 1] <= event_pulses)
    {
       ++hint;
@@ -461,16 +456,18 @@ void Midi::Reset(microseconds_t lead_in_microseconds, microseconds_t lead_out_mi
 
 void Midi::TranslateNotes(const NoteSet& notes, unsigned short pulses_per_quarter_note, unsigned short track_id)
 {
-   for (const auto& note : notes)
+   size_t tempo_hint = 0;
+   for (NoteSet::const_iterator i = notes.begin(); i != notes.end(); ++i)
    {
       TranslatedNote trans;
       
-      trans.note_id = note.note_id;
+      trans.note_id = i->note_id;
       trans.track_id = track_id;
-      trans.channel = note.channel;
-      trans.velocity = note.velocity;
-      trans.start = GetEventPulseInMicroseconds(note.start, pulses_per_quarter_note);
-      trans.end = GetEventPulseInMicroseconds(note.end, pulses_per_quarter_note);
+      trans.channel = i->channel;
+      trans.velocity = i->velocity;
+      trans.start = GetEventPulseInMicroseconds(i->start, pulses_per_quarter_note, tempo_hint);
+      size_t end_hint = tempo_hint; // Make a copy
+      trans.end = GetEventPulseInMicroseconds(i->end, pulses_per_quarter_note, end_hint);
 
       m_translated_notes.insert(trans);
    }

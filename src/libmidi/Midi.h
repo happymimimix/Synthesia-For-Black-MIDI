@@ -16,7 +16,6 @@ class MidiError;
 class MidiEvent;
 
 typedef std::vector<MidiTrack> MidiTrackList;
-
 typedef std::vector<MidiEvent> MidiEventList;
 typedef std::vector<std::pair<unsigned short, MidiEvent>> MidiEventListWithTrackId;
 
@@ -71,12 +70,14 @@ private:
 
    Midi(): m_initialized(false), m_microsecond_dead_start_air(0), m_tempo_ppqn(0) { Reset(0, 0); }
    
-   // Uses the pre-computed tempo index for O(log n) binary search.
+   // The tempo index lets us do this in O(log n) instead of the old
+   // linear scan.
    microseconds_t GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note) const;
 
-   // Cursor-hint version for converting sorted (non-decreasing) pulse
-   // sequences.  The hint is advanced linearly so that converting an
-   // entire sorted list costs O(n + t) total instead of O(n log t).
+   // This overload remembers where it left off between calls, so
+   // converting a sorted list of pulses is essentially free after
+   // the first lookup.  (The caller just has to make sure the hint
+   // starts at 0 and the input pulses are non-decreasing.)
    microseconds_t GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note, size_t &hint) const;
 
    unsigned long FindFirstNotePulse();
@@ -88,22 +89,20 @@ private:
 
    bool m_initialized;
 
-   // Pre-computed lookup table for quick pulse-to-microsecond conversion.
-   // Each entry i describes a segment of constant tempo: the tempo is
-   // m_tempo_values[i] starting at pulse m_tempo_pulse_marks[i], which
-   // corresponds to wall-clock time m_tempo_usec_marks[i].
+   // These three parallel arrays cache the cumulative wall-clock time
+   // at each tempo change so we don't have to recalculate from the
+   // beginning every time.
    std::vector<unsigned long>  m_tempo_pulse_marks;
    std::vector<microseconds_t> m_tempo_usec_marks;
    std::vector<microseconds_t> m_tempo_values;
    unsigned short m_tempo_ppqn;
 
-   // Time signature events collected during BuildTempoTrack, stored
-   // as parallel arrays sorted by pulse position.
+   // Time signature data collected during BuildTempoTrack.
    std::vector<unsigned long>  m_timesig_pulse_marks;
    std::vector<unsigned char>  m_timesig_numerators;
    std::vector<unsigned char>  m_timesig_denominators;
 
-   // Pre-computed beat and bar line positions (in microseconds)
+   // Beat and bar line positions (in microseconds) for the display
    std::vector<microseconds_t> m_beat_lines;
    std::vector<microseconds_t> m_bar_lines;
 
@@ -117,7 +116,6 @@ private:
    microseconds_t m_microsecond_dead_start_air;
 
    bool m_first_update_after_reset;
-   double m_playback_speed;
    MidiTrackList m_tracks;
 };
 

@@ -43,8 +43,6 @@ public:
    // This is generally for internal Midi library use only.
    void SetDeltaPulses(unsigned long delta_pulses) { m_delta_pulses = delta_pulses; }
 
-   void ShiftNote(int shift_amount);
-
    NoteId NoteNumber() const;
 
    // Returns a friendly name for this particular Note-On or Note-
@@ -54,7 +52,7 @@ public:
 
    // Returns the "Program to change to" value if this is a Program
    // Change event, 0 otherwise.
-   unsigned char MidiEvent::ProgramNumber() const;
+   unsigned char ProgramNumber() const;
 
    // Returns the "velocity" of a Note-On (or 0 if this is a Note-
    // Off event or any other event type).
@@ -77,22 +75,12 @@ public:
    unsigned char GetTimeSignatureNumerator() const { return m_time_sig_numerator; }
    unsigned char GetTimeSignatureDenominator() const { return m_time_sig_denominator; }
 
-   // Convenience function: Is this the special End-Of-Track event
-   bool IsEnd() const;
-
    // Returns which channel this event operates on.  This is
    // only defined for standard MIDI events that require a
    // channel argument.
    unsigned char Channel() const;
 
    void SetChannel(unsigned char channel);
-
-   // Does this event type allow arbitrary text
-   bool HasText() const;
-
-   // Returns the text content of the event (or empty-string if
-   // this isn't a text event.)
-   std::string Text() const;
 
    // Returns the status code of the MIDI event
    unsigned char StatusCode() const { return m_status; }
@@ -110,7 +98,6 @@ private:
    unsigned char m_meta_type;
 
    unsigned long m_tempo_uspqn;
-   std::string m_text;
 
    unsigned char m_time_sig_numerator;
    unsigned char m_time_sig_denominator;

@@ -8,7 +8,7 @@
 #include <set>
 #include "MidiTypes.h"
 
-// Range of all MIDI notes (0-255 for 256-key support)
+// Range of all 128 (or probably 256) MIDI notes possible
 typedef unsigned char NoteId;
 
 enum NoteState : unsigned char

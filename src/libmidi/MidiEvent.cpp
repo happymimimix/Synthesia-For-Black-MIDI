@@ -91,7 +91,6 @@ void MidiEvent::ReadMeta(std::istream &stream)
    case MidiMetaEvent_Cue:
    case MidiMetaEvent_PatchName:
    case MidiMetaEvent_DeviceName:
-      m_text = string(buffer, meta_length);
       break;
 
    case MidiMetaEvent_TempoChange:
@@ -231,11 +230,6 @@ MidiMetaEventType MidiEvent::MetaType() const
    return static_cast<MidiMetaEventType>(m_meta_type);
 }
 
-bool MidiEvent::IsEnd() const
-{
-   return (Type() == MidiEventType_Meta && MetaType() == MidiMetaEvent_EndOfTrack);
-}
-
 unsigned char MidiEvent::Channel() const
 {
    // The channel is held in the lower nibble of the status code
@@ -260,38 +254,10 @@ void MidiEvent::SetVelocity(unsigned char velocity)
    m_data2 = velocity;
 }
 
-bool MidiEvent::HasText() const
-{
-   if (Type() != MidiEventType_Meta) return false;
-
-   switch (m_meta_type)
-   {
-   case MidiMetaEvent_Text:
-   case MidiMetaEvent_Copyright:
-   case MidiMetaEvent_TrackName:
-   case MidiMetaEvent_Instrument:
-   case MidiMetaEvent_Lyric:
-   case MidiMetaEvent_Marker:
-   case MidiMetaEvent_Cue:
-   case MidiMetaEvent_PatchName:
-   case MidiMetaEvent_DeviceName:
-      return true;
-
-   default:
-      return false;
-   }
-}
-
 NoteId MidiEvent::NoteNumber() const
 {
    if (Type() != MidiEventType_NoteOn && Type() != MidiEventType_NoteOff) return 0;
    return m_data1;
-}
-
-void MidiEvent::ShiftNote(int shift_amount)
-{
-   if (Type() != MidiEventType_NoteOn && Type() != MidiEventType_NoteOff) return;
-   m_data1 = m_data1 + static_cast<unsigned char>(shift_amount);
 }
 
 unsigned char MidiEvent::ProgramNumber() const
@@ -322,12 +288,6 @@ unsigned char MidiEvent::NoteVelocity() const
    if (Type() == MidiEventType_NoteOff) return 0;
    if (Type() != MidiEventType_NoteOn) return 0;
    return m_data2;
-}
-
-std::string MidiEvent::Text() const
-{
-   if (!HasText()) return "";
-   return m_text;
 }
 
 unsigned long MidiEvent::GetTempoInUsPerQn() const

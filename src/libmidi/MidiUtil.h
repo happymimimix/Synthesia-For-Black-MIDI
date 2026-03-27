@@ -88,7 +88,6 @@ enum MidiEventType
    MidiEventType_ChannelPressure,
    MidiEventType_PitchWheel
 };
-std::wstring GetMidiEventTypeDescription(MidiEventType type);
 
 enum MidiMetaEventType
 {
@@ -118,12 +117,6 @@ enum MidiMetaEventType
 
    MidiMetaEvent_Unknown = 0xFF
 };
-
-// Returns a human-readable description of this meta type
-// type type of the text ought to contain in
-// this event. (e.g. Copyright, Lyric, Track name, etc.)
-// (If this isn't a meta event, returns an empty string)
-std::wstring GetMidiMetaEventTypeDescription(MidiMetaEventType type);
 
 
 #endif

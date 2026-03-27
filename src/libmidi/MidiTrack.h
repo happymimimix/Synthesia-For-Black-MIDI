@@ -35,11 +35,8 @@ public:
    void SetEventUsecs(const MidiEventMicrosecondList &event_usecs) { m_event_usecs = event_usecs; }
 
    const std::wstring InstrumentName() const { return InstrumentNames[m_instrument_id]; }
-   bool IsPercussion() const { return m_instrument_id == InstrumentIdPercussion; }
 
    const NoteSet &Notes() const { return m_note_set; }
-
-   void SetTrackId(unsigned short track_id);
 
    // Reports whether this track contains any Note-On MIDI events
    // (vs. just being an information track with a title or copyright)
@@ -54,16 +51,9 @@ public:
    unsigned int AggregateNotesRemain() const { return m_notes_remaining; }
    unsigned int AggregateNoteCount() const { return m_note_count; }
 
-   // Free the per-track NoteSet after translation to save memory.
-   // The cached m_note_count is preserved for queries.
    void ClearNoteSet() { m_note_set.clear(); }
-
-   // Free event pulse data after translation - only event_usecs
-   // are needed during playback.
    void ClearEventPulses() { MidiEventPulsesList().swap(m_event_pulses); }
 
-   // Build note set from events. Called during translation phase
-   // rather than during loading to reduce peak memory usage.
    void BuildNoteSet();
 
 private:

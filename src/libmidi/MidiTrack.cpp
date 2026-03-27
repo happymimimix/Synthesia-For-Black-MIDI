@@ -71,7 +71,7 @@ MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
       MidiEvent ev = MidiEvent::ReadFromStream(event_stream, last_status); 
       last_status = ev.StatusCode();
       
-      t.m_events.push_back(std::move(ev));
+      t.m_events.push_back(ev);
 
       current_pulse_count += ev.GetDeltaPulses();
       t.m_event_pulses.push_back(current_pulse_count);
@@ -117,7 +117,7 @@ void MidiTrack::BuildNoteSet()
       // Close off the last event if there was one
       if (active_event)
       {
-         auto find_ret = m_active_notes[id].first;
+         NoteInfo find_ret = m_active_notes[id].first;
          Note n;
          n.start = find_ret.pulses;
          n.end = m_event_pulses[i];
@@ -211,20 +211,6 @@ void MidiTrack::DiscoverInstrument()
 
       m_instrument_id = ev.ProgramNumber();
       instrument_found = true;
-   }
-}
-
-void MidiTrack::SetTrackId(unsigned short track_id)
-{
-   NoteSet old = m_note_set;
-   
-   m_note_set.clear();
-   for (NoteSet::const_iterator i = old.begin(); i != old.end(); ++i)
-   {
-      Note n = *i;
-      n.track_id = track_id;
-      
-      m_note_set.insert(n);
    }
 }
 
