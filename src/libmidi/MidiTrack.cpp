@@ -13,15 +13,33 @@
 
 using namespace std;
 
-// Simple read-only stream buffer that wraps an existing memory block.
-// This avoids the double-copy that istringstream requires (vector ->
-// string -> internal buffer).
+// We used to jump through a couple hoops (vector -> string ->
+// istringstream) just to get a seekable stream.  This avoids the
+// extra copies by reading straight from the buffer we already have.
 class MemoryReadBuffer : public std::streambuf
 {
 public:
    MemoryReadBuffer(char *base, size_t size)
    {
       setg(base, base, base + size);
+   }
+
+protected:
+   pos_type seekoff(off_type off, std::ios_base::seekdir dir, std::ios_base::openmode) override
+   {
+      char *next;
+      if (dir == std::ios_base::beg) next = eback() + off;
+      else if (dir == std::ios_base::cur) next = gptr() + off;
+      else next = egptr() + off;
+
+      if (next < eback() || next > egptr()) return pos_type(off_type(-1));
+      setg(eback(), next, egptr());
+      return pos_type(next - eback());
+   }
+
+   pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override
+   {
+      return seekoff(off_type(pos), std::ios_base::beg, mode);
    }
 };
 
