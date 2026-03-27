@@ -7,11 +7,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Synthesia", "Synthesia.vcxp
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Release|x64 = Release|x64
+		128k|MicrosoftWindows64Bit = 128k|MicrosoftWindows64Bit
+		256k|MicrosoftWindows64Bit = 256k|MicrosoftWindows64Bit
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{39F61D85-03F7-4874-A767-2675F4CD1545}.Release|x64.ActiveCfg = Release|x64
-		{39F61D85-03F7-4874-A767-2675F4CD1545}.Release|x64.Build.0 = Release|x64
+		{39F61D85-03F7-4874-A767-2675F4CD1545}.128k|MicrosoftWindows64Bit.ActiveCfg = 128k|x64
+		{39F61D85-03F7-4874-A767-2675F4CD1545}.128k|MicrosoftWindows64Bit.Build.0 = 128k|x64
+		{39F61D85-03F7-4874-A767-2675F4CD1545}.256k|MicrosoftWindows64Bit.ActiveCfg = 256k|x64
+		{39F61D85-03F7-4874-A767-2675F4CD1545}.256k|MicrosoftWindows64Bit.Build.0 = 256k|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

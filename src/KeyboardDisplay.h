@@ -17,7 +17,8 @@
 
 enum KeyboardSize
 {
-   KeyboardSize128
+   KeyboardSize128,
+   KeyboardSize256
 };
 
 

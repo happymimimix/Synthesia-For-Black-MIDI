@@ -99,6 +99,7 @@ int KeyboardDisplay::GetStartingOctave() const
    switch (m_size)
    {
    case KeyboardSize128: return StartingOctaveOn128;
+   case KeyboardSize256: return StartingOctaveOn128;
    default: throw SynthesiaError(Error_BadPianoType);
    }
 }
@@ -111,6 +112,7 @@ char KeyboardDisplay::GetStartingNote() const
    switch (m_size)
    {
    case KeyboardSize128: return StartingKeyOn128;
+   case KeyboardSize256: return StartingKeyOn128;
    default: throw SynthesiaError(Error_BadPianoType);
    }
 }
@@ -119,10 +121,12 @@ int KeyboardDisplay::GetWhiteKeyCount() const
 {
    // Source: Google Image Search
    const static int WhiteKeysOn128 = 75;
+   const static int WhiteKeysOn256 = 149;
 
    switch (m_size)
    {
    case KeyboardSize128: return WhiteKeysOn128;
+   case KeyboardSize256: return WhiteKeysOn256;
    default: throw SynthesiaError(Error_BadPianoType);
    }
 }
@@ -431,6 +435,7 @@ void KeyboardDisplay::DrawNotePass(Renderer &renderer, const Tga *tex_white, con
    switch (m_size)
    {
    case KeyboardSize128: keyboard_type_offset = 7 - WhiteNotesPerOctave; break;
+   case KeyboardSize256: keyboard_type_offset = 7 - WhiteNotesPerOctave; break;
    default: throw SynthesiaError(Error_BadPianoType);
    }
 

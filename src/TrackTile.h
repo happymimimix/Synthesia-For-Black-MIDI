@@ -32,7 +32,7 @@ enum TrackTileGraphic
 class TrackTile
 {
 public:
-   TrackTile(int x, int y, size_t track_id, Track::TrackColor color, Track::Mode mode);
+   TrackTile(int x, int y, unsigned short track_id, Track::TrackColor color, Track::Mode mode);
 
    void Update(const MouseInfo &translated_mouse);
    void Draw(Renderer &renderer, const Midi *midi, Tga *buttons, Tga *box) const;
@@ -47,7 +47,7 @@ public:
    bool IsPreviewOn() const { return m_preview_on; }
    void TurnOffPreview() { m_preview_on = false; }
 
-   size_t GetTrackId() const { return m_track_id; }
+   unsigned short GetTrackId() const { return m_track_id; }
 
    const ButtonState WholeTile() const { return whole_tile; }
    const ButtonState ButtonPreview() const { return button_preview; }
@@ -73,7 +73,7 @@ private:
    int LookupGraphic(TrackTileGraphic graphic, bool button_hovering) const;
 
    // Link to the track index of the Midi object
-   size_t m_track_id;
+   unsigned short m_track_id;
 };
 
 #endif

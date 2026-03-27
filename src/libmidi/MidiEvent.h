@@ -54,13 +54,13 @@ public:
 
    // Returns the "Program to change to" value if this is a Program
    // Change event, 0 otherwise.
-   int MidiEvent::ProgramNumber() const;
+   unsigned char MidiEvent::ProgramNumber() const;
 
    // Returns the "velocity" of a Note-On (or 0 if this is a Note-
-   // Off event).  Returns -1 for other event types.
-   int NoteVelocity() const;
+   // Off event or any other event type).
+   unsigned char NoteVelocity() const;
 
-   void SetVelocity(int velocity);
+   void SetVelocity(unsigned char velocity);
 
    // Returns which type of meta event this is (or
    // MetaEvent_Unknown if type() is not EventType_Meta).

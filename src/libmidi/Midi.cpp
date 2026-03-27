@@ -141,15 +141,11 @@ Midi Midi::ReadFromStream(istream &stream)
 
    // Build, translate, and free each track's NoteSet one at a time.
    // This way only one track's NoteSet is in memory at any moment.
-   for (size_t i = 0; i < m.m_tracks.size(); ++i)
+   for (unsigned short i = 0; i < static_cast<unsigned short>(m.m_tracks.size()); ++i)
    {
       m.m_tracks[i].BuildNoteSet();
-      m.m_tracks[i].SetTrackId(i);
 
-      // Translate each track's list of notes and list
-      // of events into microseconds.
-
-      m.TranslateNotes(m.m_tracks[i].Notes(), pulses_per_quarter_note);
+      m.TranslateNotes(m.m_tracks[i].Notes(), pulses_per_quarter_note, i);
 
       // Free this track's NoteSet immediately — it's no longer needed.
       m.m_tracks[i].ClearNoteSet();
@@ -174,6 +170,22 @@ Midi Midi::ReadFromStream(istream &stream)
 
    // Eat everything up until *just* before the first note event
    m.m_microsecond_dead_start_air = m.GetEventPulseInMicroseconds(m.FindFirstNotePulse(), pulses_per_quarter_note) - 1;
+
+   // Free data that is only needed during loading/translation.
+   // Tempo index - only used by GetEventPulseInMicroseconds during translation
+   std::vector<unsigned long>().swap(m.m_tempo_pulse_marks);
+   std::vector<microseconds_t>().swap(m.m_tempo_usec_marks);
+   std::vector<microseconds_t>().swap(m.m_tempo_values);
+   // Time signature data - only used by BuildBeatLines
+   std::vector<unsigned long>().swap(m.m_timesig_pulse_marks);
+   std::vector<unsigned char>().swap(m.m_timesig_numerators);
+   std::vector<unsigned char>().swap(m.m_timesig_denominators);
+
+   // Per-track event pulses - playback only uses event_usecs
+   for (size_t i = 0; i < m.m_tracks.size(); ++i)
+   {
+      m.m_tracks[i].ClearEventPulses();
+   }
    
    return m;
 }
@@ -200,32 +212,20 @@ void Midi::BuildTempoTrack()
    std::map<unsigned long, MidiEvent> tempo_events;
    std::map<unsigned long, MidiEvent> timesig_events;
 
-   // Run through each track looking for tempo events
-   for (MidiTrackList::iterator t = m_tracks.begin(); t != m_tracks.end(); ++t)
+   // Run through each track looking for tempo and time signature events.
+   for (MidiTrackList::const_iterator t = m_tracks.begin(); t != m_tracks.end(); ++t)
    {
-      for (size_t i = t->Events().size(); i > 0; --i)
+      for (size_t i = 0; i < t->Events().size(); ++i)
       {
-         size_t idx = i - 1;
-         MidiEvent ev = t->Events()[idx];
-         unsigned long ev_pulses = t->EventPulses()[idx];
+         const MidiEvent &ev = t->Events()[i];
+         unsigned long ev_pulses = t->EventPulses()[i];
 
-         bool is_tempo = (ev.Type() == MidiEventType_Meta && ev.MetaType() == MidiMetaEvent_TempoChange);
-         bool is_timesig = (ev.Type() == MidiEventType_Meta && ev.MetaType() == MidiMetaEvent_TimeSignature);
+         if (ev.Type() != MidiEventType_Meta) continue;
 
-         if (!is_tempo && !is_timesig) continue;
-
-         if (is_tempo) tempo_events[ev_pulses] = ev;
-         if (is_timesig) timesig_events[ev_pulses] = ev;
-
-         // Adjust next event's delta time before erasing
-         if (idx + 1 < t->Events().size())
-         {
-            unsigned long next_dt = t->Events()[idx + 1].GetDeltaPulses();
-            t->Events()[idx + 1].SetDeltaPulses(ev.GetDeltaPulses() + next_dt);
-         }
-
-         t->Events().erase(t->Events().begin() + idx);
-         t->EventPulses().erase(t->EventPulses().begin() + idx);
+         if (ev.MetaType() == MidiMetaEvent_TempoChange)
+            tempo_events[ev_pulses] = ev;
+         else if (ev.MetaType() == MidiMetaEvent_TimeSignature)
+            timesig_events[ev_pulses] = ev;
       }
    }
 
@@ -459,14 +459,14 @@ void Midi::Reset(microseconds_t lead_in_microseconds, microseconds_t lead_out_mi
    for (MidiTrackList::iterator i = m_tracks.begin(); i != m_tracks.end(); ++i) { i->Reset(); }
 }
 
-void Midi::TranslateNotes(const NoteSet &notes, unsigned short pulses_per_quarter_note)
+void Midi::TranslateNotes(const NoteSet& notes, unsigned short pulses_per_quarter_note, unsigned short track_id)
 {
    for (const auto& note : notes)
    {
       TranslatedNote trans;
       
       trans.note_id = note.note_id;
-      trans.track_id = note.track_id;
+      trans.track_id = track_id;
       trans.channel = note.channel;
       trans.velocity = note.velocity;
       trans.start = GetEventPulseInMicroseconds(note.start, pulses_per_quarter_note);
@@ -492,15 +492,14 @@ MidiEventListWithTrackId Midi::Update(microseconds_t delta_microseconds)
    if (m_microsecond_song_position < 0) return aggregated_events;
    if (delta_microseconds > m_microsecond_song_position) delta_microseconds = m_microsecond_song_position;
 
-   const size_t track_count = m_tracks.size();
-   for (size_t i = 0; i < track_count; ++i)
+   for (unsigned short i = 0; i < static_cast<unsigned short>(m_tracks.size()); ++i)
    {
       MidiEventList track_events = m_tracks[i].Update(delta_microseconds);
 
       const size_t event_count = track_events.size();
       for (size_t j = 0; j < event_count; ++j)
       {
-         aggregated_events.insert(aggregated_events.end(), std::pair<size_t, MidiEvent>(i, track_events[j]));
+         aggregated_events.insert(aggregated_events.end(), std::pair<unsigned short, MidiEvent>(i, track_events[j]));
       }
    }
 

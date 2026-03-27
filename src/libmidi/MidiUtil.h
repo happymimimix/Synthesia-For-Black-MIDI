@@ -19,9 +19,9 @@ unsigned short BigToSystem16(unsigned short x);
 // byte, and the last bit is a kind of "keep going" flag.
 unsigned long parse_variable_length(std::istream &in);
 
-const static int InstrumentCount = 130;
-const static int InstrumentIdVarious = InstrumentCount - 1;
-const static int InstrumentIdPercussion = InstrumentCount - 2;
+const static unsigned char InstrumentCount = 130;
+const static unsigned char InstrumentIdVarious = InstrumentCount - 1;
+const static unsigned char InstrumentIdPercussion = InstrumentCount - 2;
 extern std::wstring const InstrumentNames[InstrumentCount];
 
 enum MidiErrorCode

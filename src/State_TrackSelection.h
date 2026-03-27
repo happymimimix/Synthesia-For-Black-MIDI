@@ -35,7 +35,7 @@ private:
 
    bool m_preview_on;
    bool m_first_update_after_seek;
-   size_t m_preview_track_id;
+   unsigned short m_preview_track_id;
 
    ButtonState m_continue_button;
    ButtonState m_back_button;

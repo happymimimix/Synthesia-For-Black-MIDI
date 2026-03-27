@@ -29,17 +29,13 @@ static constexpr unsigned long FRAME_DELAYS[3] = { 17, 17, 16 };
 
 void PlayingState::SetupNoteState()
 {
-   TranslatedNoteSet old = m_notes;
-   m_notes.clear();
-
-   for (TranslatedNoteSet::const_iterator i = old.begin(); i != old.end(); ++i)
+   // Modify state in-place. The state field does not participate in
+   // set ordering, so this is safe and avoids a full copy (~65 GB).
+   for (TranslatedNoteSet::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
    {
-      TranslatedNote n = *i;
-
+      TranslatedNote &n = const_cast<TranslatedNote&>(*i);
       n.state = AutoPlayed;
       if (m_state.track_properties[n.track_id].mode == Track::ModeYouPlay) n.state = UserPlayable;
-      
-      m_notes.insert(n);
    }
 }
 
@@ -113,7 +109,14 @@ void PlayingState::Init()
    const static microseconds_t DefaultShowDurationMicroseconds = 3250000;
    m_show_duration = DefaultShowDurationMicroseconds;
 
-   m_keyboard = new KeyboardDisplay(KeyboardSize128, GetStateWidth() - Layout::ScreenMarginX*2, CalcKeyboardHeight());
+   m_keyboard = new KeyboardDisplay(
+#ifndef MICROTONAL
+   KeyboardSize128,
+#else
+   KeyboardSize256,
+#endif
+   GetStateWidth()-Layout::ScreenMarginX*2, CalcKeyboardHeight()
+   );
    ResetSong();
 }
 
@@ -135,7 +138,7 @@ void PlayingState::Play(microseconds_t delta_microseconds)
    const size_t length = evs.size();
    for (size_t i = 0; i < length; ++i)
    {
-      const size_t &track_id = evs[i].first;
+      const unsigned short &track_id = evs[i].first;
       const MidiEvent &ev = evs[i].second;
 
       // Draw refers to the keys lighting up (automatically) -- not necessarily
@@ -162,7 +165,7 @@ void PlayingState::Play(microseconds_t delta_microseconds)
 
       if (draw && (ev.Type() == MidiEventType_NoteOn || ev.Type() == MidiEventType_NoteOff))
       {
-         int vel = ev.NoteVelocity();
+         unsigned char vel = ev.NoteVelocity();
          const string name = MidiEvent::NoteName(ev.NoteNumber());
 
          m_keyboard->SetKeyActive(name, (vel > 0), m_state.track_properties[track_id].color);

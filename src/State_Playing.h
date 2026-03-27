@@ -33,7 +33,7 @@ struct ActiveNote
 
    NoteId note_id;
    unsigned char channel;
-   int velocity;
+   unsigned char velocity;
 };
 typedef std::set<ActiveNote, ActiveNote> ActiveNoteSet;
 

@@ -18,7 +18,7 @@ class MidiEvent;
 typedef std::vector<MidiTrack> MidiTrackList;
 
 typedef std::vector<MidiEvent> MidiEventList;
-typedef std::vector<std::pair<size_t, MidiEvent> > MidiEventListWithTrackId;
+typedef std::vector<std::pair<unsigned short, MidiEvent>> MidiEventListWithTrackId;
 
 // NOTE: This library's MIDI loading and handling is destructive.  Perfect
 //       1:1 serialization routines will not be possible without quite a
@@ -84,7 +84,7 @@ private:
    void BuildTempoTrack();
    void BuildTempoIndex(unsigned short pulses_per_quarter_note);
    void BuildBeatLines(unsigned short pulses_per_quarter_note);
-   void TranslateNotes(const NoteSet &notes, unsigned short pulses_per_quarter_note);
+   void TranslateNotes(const NoteSet &notes, unsigned short pulses_per_quarter_note, unsigned short track_id);
 
    bool m_initialized;
 

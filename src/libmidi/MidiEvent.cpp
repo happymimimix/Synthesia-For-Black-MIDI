@@ -253,11 +253,11 @@ void MidiEvent::SetChannel(unsigned char channel)
    m_status = m_status | channel;
 }
 
-void MidiEvent::SetVelocity(int velocity)
+void MidiEvent::SetVelocity(unsigned char velocity)
 {
    if (Type() != MidiEventType_NoteOn) return;
 
-   m_data2 = static_cast<unsigned char>(velocity);
+   m_data2 = velocity;
 }
 
 bool MidiEvent::HasText() const
@@ -294,13 +294,13 @@ void MidiEvent::ShiftNote(int shift_amount)
    m_data1 = m_data1 + static_cast<unsigned char>(shift_amount);
 }
 
-int MidiEvent::ProgramNumber() const
+unsigned char MidiEvent::ProgramNumber() const
 {
    if (Type() != MidiEventType_ProgramChange) return 0;
    return m_data1;
 }
 
-std::string MidiEvent::NoteName(unsigned int note_number)
+std::string MidiEvent::NoteName(NoteId note_number)
 {
    // Music domain knowledge
    const static unsigned int NotesPerOctave = 12;
@@ -317,11 +317,11 @@ std::string MidiEvent::NoteName(unsigned int note_number)
    return STRING(note_base << octave);
 }
 
-int MidiEvent::NoteVelocity() const
+unsigned char MidiEvent::NoteVelocity() const
 {
    if (Type() == MidiEventType_NoteOff) return 0;
-   if (Type() != MidiEventType_NoteOn) return -1;
-   return static_cast<int>(m_data2);
+   if (Type() != MidiEventType_NoteOn) return 0;
+   return m_data2;
 }
 
 std::string MidiEvent::Text() const

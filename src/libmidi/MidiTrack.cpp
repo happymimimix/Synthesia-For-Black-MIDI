@@ -8,11 +8,22 @@
 #include "Midi.h"
 
 #include <array>
-#include <sstream>
 #include <string>
 #include <map>
 
 using namespace std;
+
+// Simple read-only stream buffer that wraps an existing memory block.
+// This avoids the double-copy that istringstream requires (vector ->
+// string -> internal buffer).
+class MemoryReadBuffer : public std::streambuf
+{
+public:
+   MemoryReadBuffer(char *base, size_t size)
+   {
+      setg(base, base, base + size);
+   }
+};
 
 MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
 {
@@ -41,13 +52,14 @@ MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
 
    if (stream.fail())
    {
-      buffer.clear();
+      std::vector<char>().swap(buffer);
       throw MidiError(MidiError_TrackTooShort);
    }
 
-   // We have to jump through a couple hoops because istringstream
-   // can't handle binary data unless constructed through an std::string. 
-   std::istringstream event_stream(std::string(buffer.begin(), buffer.end()), std::ios::binary);
+   // Read directly from the buffer in memory, avoiding the
+   // double-copy that istringstream would require.
+   MemoryReadBuffer membuf(buffer.data(), track_length);
+   std::istream event_stream(&membuf);
 
    MidiTrack t;
 
@@ -72,7 +84,7 @@ MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
 
 struct NoteInfo
 {
-   int velocity;
+   unsigned char velocity;
    unsigned char channel;
    unsigned long pulses;
 };
@@ -89,7 +101,7 @@ void MidiTrack::BuildNoteSet()
    // begin a new one.
    //
    // A note_on with velocity 0 is a note_off
-   std::array<std::pair<NoteInfo, bool>, 0xFF> m_active_notes;
+   std::array<std::pair<NoteInfo, bool>, 0x100> m_active_notes;
 
    for (size_t i = 0; i < m_events.size(); ++i)
    {
@@ -202,7 +214,7 @@ void MidiTrack::DiscoverInstrument()
    }
 }
 
-void MidiTrack::SetTrackId(size_t track_id)
+void MidiTrack::SetTrackId(unsigned short track_id)
 {
    NoteSet old = m_note_set;
    
@@ -234,7 +246,7 @@ MidiEventList MidiTrack::Update(microseconds_t delta_microseconds)
       if (m_event_usecs[i] <= m_running_microseconds)
       {
          evs.push_back(m_events[i]);
-         m_last_event = static_cast<long>(i);
+         m_last_event = static_cast<long long>(i);
 
          if (m_events[i].Type() == MidiEventType_NoteOn &&
             m_events[i].NoteVelocity() > 0) m_notes_remaining--;

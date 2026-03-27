@@ -8,13 +8,10 @@
 #include <set>
 #include "MidiTypes.h"
 
-// Range of all 128 MIDI notes possible
-typedef unsigned int NoteId;
+// Range of all MIDI notes (0-255 for 256-key support)
+typedef unsigned char NoteId;
 
-// Arbitrary value outside the usual range
-const static NoteId InvalidNoteId = 2048;
-
-enum NoteState
+enum NoteState : unsigned char
 {
    AutoPlayed,
    UserPlayable,
@@ -45,12 +42,12 @@ struct GenericNote
    T start;
    T end;
    NoteId note_id;
-   size_t track_id;
+   unsigned short track_id;
 
    // We have to drag a little extra info around so we can
    // play the user's input correctly
    unsigned char channel;
-   int velocity;
+   unsigned char velocity;
 
    NoteState state;
 };

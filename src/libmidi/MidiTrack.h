@@ -39,7 +39,7 @@ public:
 
    const NoteSet &Notes() const { return m_note_set; }
 
-   void SetTrackId(size_t track_id);
+   void SetTrackId(unsigned short track_id);
 
    // Reports whether this track contains any Note-On MIDI events
    // (vs. just being an information track with a title or copyright)
@@ -58,6 +58,10 @@ public:
    // The cached m_note_count is preserved for queries.
    void ClearNoteSet() { m_note_set.clear(); }
 
+   // Free event pulse data after translation - only event_usecs
+   // are needed during playback.
+   void ClearEventPulses() { MidiEventPulsesList().swap(m_event_pulses); }
+
    // Build note set from events. Called during translation phase
    // rather than during loading to reduce peak memory usage.
    void BuildNoteSet();
@@ -74,10 +78,10 @@ private:
    NoteSet m_note_set;
    unsigned int m_note_count;
 
-   int m_instrument_id;
+   unsigned char m_instrument_id;
 
    microseconds_t m_running_microseconds;
-   long m_last_event;
+   long long m_last_event;
 
    unsigned int m_notes_remaining;
 };
