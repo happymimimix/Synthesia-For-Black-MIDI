@@ -7,7 +7,7 @@
 
 #include <string>
 #include <vector>
-#include <set>
+#include <unordered_set>
 
 #include "SharedState.h"
 #include "GameState.h"
@@ -35,7 +35,7 @@ struct ActiveNote
    unsigned char channel;
    unsigned char velocity;
 };
-typedef std::set<ActiveNote, ActiveNote> ActiveNoteSet;
+typedef std::unordered_set<ActiveNote, ActiveNote> ActiveNoteSet;
 
 class PlayingState : public GameState
 {

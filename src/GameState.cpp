@@ -62,7 +62,7 @@ void GameState::SetManager(GameStateManager *manager)
 
 GameStateManager::~GameStateManager()
 {
-   for (std::map<Texture, Tga*>::iterator i = m_textures.begin(); i != m_textures.end(); ++i)
+   for (std::unordered_map<Texture, Tga*>::iterator i = m_textures.begin(); i != m_textures.end(); ++i)
    {
       if (i->second) Tga::Release(i->second);
       i->second = 0;

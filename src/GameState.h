@@ -7,7 +7,7 @@
 
 #include <exception>
 #include <string>
-#include <map>
+#include <unordered_map>
 
 #include "os.h"
 #include "Textures.h"
@@ -191,7 +191,7 @@ private:
    int m_screen_x;
    int m_screen_y;
 
-   mutable std::map<Texture, Tga*> m_textures;
+   mutable std::unordered_map<Texture, Tga*> m_textures;
 };
 
 

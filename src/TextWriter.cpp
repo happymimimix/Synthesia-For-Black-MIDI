@@ -7,19 +7,19 @@
 #include "SynthesiaError.h"
 #include "os_graphics.h"
 
-#include <map>
+#include <unordered_map>
 
 #ifdef WIN32
 // TODO: This should be deleted at shutdown
-static std::map<int, HFONT> font_handle_lookup;
+static std::unordered_map<int, HFONT> font_handle_lookup;
 static int next_call_list_start = 1;
 #else
 // TODO: This should be deleted at shutdown
-static std::map<int, ATSUStyle> atsu_style_lookup;
+static std::unordered_map<int, ATSUStyle> atsu_style_lookup;
 #endif
 
 // TODO: This should be deleted at shutdown
-static std::map<int, int> font_size_lookup;
+static std::unordered_map<int, int> font_size_lookup;
 
 TextWriter::TextWriter(int in_x, int in_y, Renderer &in_renderer, bool in_centered, int in_size, std::wstring fontname) :
 x(in_x), y(in_y), size(in_size), original_x(0), last_line_height(0), centered(in_centered), renderer(in_renderer)

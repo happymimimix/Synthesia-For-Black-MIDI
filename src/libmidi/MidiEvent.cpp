@@ -283,11 +283,11 @@ std::string MidiEvent::NoteName(NoteId note_number)
    return STRING(note_base << octave);
 }
 
-unsigned char MidiEvent::NoteVelocity() const
+signed char MidiEvent::NoteVelocity() const
 {
    if (Type() == MidiEventType_NoteOff) return 0;
    if (Type() != MidiEventType_NoteOn) return -1;
-   return m_data2;
+   return m_data2 & 0x7F;
 }
 
 unsigned long MidiEvent::GetTempoInUsPerQn() const

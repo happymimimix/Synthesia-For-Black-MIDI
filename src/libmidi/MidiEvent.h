@@ -55,8 +55,8 @@ public:
    unsigned char ProgramNumber() const;
 
    // Returns the "velocity" of a Note-On (or 0 if this is a Note-
-   // Off event).  Returns 255 for other event types.
-   unsigned char NoteVelocity() const;
+   // Off event).  Returns -1 for other event types.
+   signed char NoteVelocity() const;
 
    void SetVelocity(unsigned char velocity);
 
