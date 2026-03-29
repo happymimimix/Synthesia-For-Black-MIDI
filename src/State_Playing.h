@@ -20,22 +20,23 @@ class MidiCommIn;
 
 struct ActiveNote
 {
-   bool operator()(const ActiveNote &lhs, const ActiveNote &rhs) const
+   bool operator==(const ActiveNote &n) const
    {
-      if (lhs.note_id < rhs.note_id) return true;
-      if (lhs.note_id > rhs.note_id) return false;
-
-      if (lhs.channel < rhs.channel) return true;
-      if (lhs.channel > rhs.channel) return false;
-
-      return false;
+      return note_id == n.note_id && channel == n.channel;
    }
 
    NoteId note_id;
    unsigned char channel;
    unsigned char velocity;
 };
-typedef std::unordered_set<ActiveNote, ActiveNote> ActiveNoteSet;
+struct ActiveNoteHash
+{
+   size_t operator()(const ActiveNote &n) const
+   {
+      return std::hash<unsigned int>()((static_cast<unsigned int>(n.note_id)<<24)|(static_cast<unsigned int>(n.channel)<<16));
+   }
+};
+typedef std::unordered_set<ActiveNote, ActiveNoteHash> ActiveNoteSet;
 
 class PlayingState : public GameState
 {
