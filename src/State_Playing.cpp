@@ -282,7 +282,7 @@ void PlayingState::Listen()
          // Adjust our statistics
          double time_diff = static_cast<double>(std::abs(cur_time - closest_match->start));
          double accuracy = 1.0 - time_diff / (static_cast<double>(KeyboardDisplay::NoteWindowLength) / 2);
-         double tier_multiplier = 0.00;
+         double tier_multiplier = 0.90;
          if (accuracy > 0.9)  tier_multiplier = 1.15;
          else if (accuracy > 0.75) tier_multiplier = 1.10;
          else if (accuracy > 0.4) tier_multiplier = 1.05;

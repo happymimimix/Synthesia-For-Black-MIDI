@@ -286,7 +286,7 @@ std::string MidiEvent::NoteName(NoteId note_number)
 unsigned char MidiEvent::NoteVelocity() const
 {
    if (Type() == MidiEventType_NoteOff) return 0;
-   if (Type() != MidiEventType_NoteOn) return 0;
+   if (Type() != MidiEventType_NoteOn) return -1;
    return m_data2;
 }
 
