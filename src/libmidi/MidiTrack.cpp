@@ -8,6 +8,7 @@
 #include "Midi.h"
 
 #include <array>
+#include <queue>
 #include <string>
 #include <map>
 
@@ -119,7 +120,7 @@ void MidiTrack::BuildNoteSet()
    // begin a new one.
    //
    // A note_on with velocity 0 is a note_off
-   std::array<std::pair<NoteInfo, bool>, 0x100> m_active_notes;
+   std::array<std::queue<NoteInfo>,0x100> m_active_notes;
 
    for (size_t i = 0; i < m_events.size(); ++i)
    {
@@ -129,13 +130,10 @@ void MidiTrack::BuildNoteSet()
       bool on = (ev.Type() == MidiEventType_NoteOn && ev.NoteVelocity() > 0);
       NoteId id = ev.NoteNumber();
 
-      // Check for an active note
-      bool active_event = m_active_notes[id].second;
-
       // Close off the last event if there was one
-      if (active_event)
+      if (!on && !m_active_notes[id].empty())
       {
-         NoteInfo find_ret = m_active_notes[id].first;
+         NoteInfo &find_ret = m_active_notes[id].front();
          Note n;
          n.start = find_ret.pulses;
          n.end = m_event_pulses[i];
@@ -149,19 +147,16 @@ void MidiTrack::BuildNoteSet()
 
          // Add a note and remove this NoteId from the active list
          m_note_set.insert(n);
-         m_active_notes[id].second = false;
-      }
-
-      // We've handled any active events.  If this was a note_off we're done.
-      if (!on) continue;
-
+         m_active_notes[id].pop();
+      } else {
       // Add a new active event
       NoteInfo info;
       info.channel = ev.Channel();
       info.velocity = ev.NoteVelocity();
       info.pulses = m_event_pulses[i];
 
-      m_active_notes[id] = std::make_pair(info, true);
+      m_active_notes[id].push(info);
+      }
    }
 
    if (m_active_notes.size() > 0)
