@@ -195,67 +195,54 @@ void PlayingState::Listen()
       microseconds_t cur_time = m_state.midi->GetSongPositionInMicroseconds();
       MidiEvent ev = m_state.midi_in->Read();
 
-      // Just eat input if we're paused
-      if (m_paused) continue;
-
       // We're only interested in NoteOn and NoteOff
-      if (ev.Type() != MidiEventType_NoteOn && ev.Type() != MidiEventType_NoteOff) continue;
+      if (ev.Type() != MidiEventType_NoteOn && ev.Type() != MidiEventType_NoteOff) {
+         if (m_state.midi_out) m_state.midi_out->Write(ev);
+         continue;
+      }
 
       string note_name = MidiEvent::NoteName(ev.NoteNumber());
 
       // On key release we have to look for existing "active" notes and turn them off.
       if (ev.Type() == MidiEventType_NoteOff || ev.NoteVelocity() == 0)
       {
-         // NOTE: This assumes mono-channel input.  If they're piping an entire MIDI file
-         //       (or even the *same* MIDI file) through another source, we could get the
-         //       same NoteId on different channels -- and this code would start behaving
-         //       incorrectly.
-         for (ActiveNoteSet::iterator i = m_active_notes.begin(); i != m_active_notes.end(); ++i)
-         {
-            if (ev.NoteNumber() != i->note_id) continue;
+         if (!m_active_notes[ev.NoteNumber()].empty()){
+            ActiveNoteSetItem::iterator matched = m_active_notes[ev.NoteNumber()].find(ev.Channel());
 
-            // Play it on the correct channel to turn the note we started
-            // previously, off.
-            ev.SetChannel(i->channel);
+            if (matched != m_active_notes[ev.NoteNumber()].end()) {
+               // Try to find one that match the channel exactly first.
+               if (m_state.midi_out) m_state.midi_out->Write(ev);
+               m_active_notes[ev.NoteNumber()].erase(matched);
+            } else {
+               // If not found, pick the first item and override the channel.
+               matched = m_active_notes[ev.NoteNumber()].begin();
+               ev.SetChannel(*matched);
+               if (m_state.midi_out) m_state.midi_out->Write(ev);
+               m_active_notes[ev.NoteNumber()].erase(matched);
+            }
+         }
+         else {
             if (m_state.midi_out) m_state.midi_out->Write(ev);
-
-            m_active_notes.erase(i);
-            break;
          }
 
          m_keyboard->SetKeyActive(note_name, false, Track::FlatGray, true);
          continue;
       }
 
-      bool any_found = false;
-
       TranslatedNoteSet::iterator closest_match = m_notes.end();
-      for (TranslatedNoteSet::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
+      TranslatedNote search_key = {};
+      search_key.start = cur_time - (KeyboardDisplay::NoteWindowLength / 2);
+      for (TranslatedNoteSet::iterator i = m_notes.lower_bound(search_key); i != m_notes.end(); ++i)
       {
-         const microseconds_t window_start = i->start - (KeyboardDisplay::NoteWindowLength / 2);
-         const microseconds_t window_end = i->start + (KeyboardDisplay::NoteWindowLength / 2);
-
          // As soon as we start processing notes that couldn't possibly
          // have been played yet, we're done.
-         if (window_start > cur_time) break;
+         if (i->start - (KeyboardDisplay::NoteWindowLength / 2) > cur_time) break;
 
-         if (i->state != UserPlayable) continue;
-
-         if (window_end > cur_time && i->note_id == ev.NoteNumber())
+         if (i->note_id == ev.NoteNumber() && i->state == UserPlayable)
          {
-            if (closest_match == m_notes.end())
-            {
-               closest_match = i;
-               continue;
-            }
-
-            microseconds_t this_distance = cur_time - i->start;
-            if (i->start > cur_time) this_distance = i->start - cur_time;
-
-            microseconds_t known_best = cur_time - closest_match->start;
-            if (closest_match->start > cur_time) known_best = closest_match->start - cur_time;
-
-            if (this_distance < known_best) closest_match = i;
+            // We've found a match!
+            closest_match = i;
+            break;
          }
       }
 
@@ -263,20 +250,21 @@ void PlayingState::Listen()
 
       if (closest_match != m_notes.end())
       {
-         any_found = true;
          note_color = m_state.track_properties[closest_match->track_id].color;
 
          // "Open" this note so we can catch the close later and turn off
          // the note.
-         ActiveNote n;
-         n.channel = closest_match->channel;
-         n.note_id = closest_match->note_id;
-         n.velocity = closest_match->velocity;
-         m_active_notes.insert(n);
+         if (m_active_notes[closest_match->note_id].count(closest_match->channel) && m_state.midi_out)
+         {
+            MidiEvent offev = ev; // Make a copy first.
+            offev.SetVelocity(0);
+            m_state.midi_out->Write(offev);
+         }
+         m_active_notes[closest_match->note_id].insert(closest_match->channel);
 
          // Play it
-         ev.SetChannel(n.channel);
-         ev.SetVelocity(n.velocity);
+         ev.SetChannel(closest_match->channel);
+         ev.SetVelocity(closest_match->velocity);
          if (m_state.midi_out) m_state.midi_out->Write(ev);
 
          // Adjust our statistics
@@ -302,6 +290,7 @@ void PlayingState::Listen()
       }
       else
       {
+         if (m_state.midi_out) m_state.midi_out->Write(ev);
          m_state.stats.stray_notes++;
       }
 
@@ -340,10 +329,31 @@ void PlayingState::Update()
       TranslatedNoteSet::iterator note = i++;
 
       const microseconds_t window_end = note->start + (KeyboardDisplay::NoteWindowLength / 2);
+      const microseconds_t window_finish = note->end - (KeyboardDisplay::NoteWindowLength / 2);
 
-      if (m_state.midi_in && note->state == UserPlayable && window_end <= cur_time)
+      if (m_state.midi_in && (
+      (note->state == UserPlayable && window_end < cur_time)||
+      (note->state == UserHit && window_finish > cur_time && m_active_notes[note->note_id].empty())
+      ))
       {
+         if (note->state == UserHit)
+         {
+            const static double NoteValue = 90.0; // Minimum possible score
+            m_state.stats.score -= NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
+
+            m_state.stats.notes_user_could_have_played--;
+            m_state.stats.speed_integral -= m_state.song_speed;
+
+            m_state.stats.notes_user_actually_played--;
+         }
+
          const_cast<TranslatedNote&>(*note).state = UserMissed;
+
+         // They missed a note, reset the combo counter.
+         m_current_combo = 0;
+
+         m_state.stats.notes_user_could_have_played++;
+         m_state.stats.speed_integral += m_state.song_speed;
       }
 
       if (note->start > cur_time) { break; }
@@ -364,18 +374,7 @@ void PlayingState::Update()
          m_state.stats.total_notes_user_pressed++;
       }
 
-      if (note->end < cur_time && window_end < cur_time)
-      {
-         if (m_state.midi_in && note->state == UserMissed)
-         {
-            // They missed a note, reset the combo counter.
-            m_current_combo = 0;
-
-            m_state.stats.notes_user_could_have_played++;
-            m_state.stats.speed_integral += m_state.song_speed;
-         }
-         m_notes.erase(note);
-      }
+      if (note->end < cur_time && window_end < cur_time) m_notes.erase(note);
    }
 
    if (IsKeyPressed(KeyUp))

@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 #include <unordered_set>
 
 #include "SharedState.h"
@@ -18,25 +19,9 @@ class Midi;
 class MidiCommOut;
 class MidiCommIn;
 
-struct ActiveNote
-{
-   bool operator==(const ActiveNote &n) const
-   {
-      return note_id == n.note_id && channel == n.channel;
-   }
-
-   NoteId note_id;
-   unsigned char channel;
-   unsigned char velocity;
-};
-struct ActiveNoteHash
-{
-   size_t operator()(const ActiveNote &n) const
-   {
-      return std::hash<unsigned int>()((static_cast<unsigned int>(n.note_id)<<24)|(static_cast<unsigned int>(n.channel)<<16));
-   }
-};
-typedef std::unordered_set<ActiveNote, ActiveNoteHash> ActiveNoteSet;
+typedef unsigned char ActiveNoteChan;
+typedef std::unordered_set<ActiveNoteChan> ActiveNoteSetItem;
+typedef std::array<ActiveNoteSetItem, 0x100> ActiveNoteSet;
 
 class PlayingState : public GameState
 {

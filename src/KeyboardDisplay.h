@@ -46,8 +46,6 @@ public:
 
    void SetKeyActive(const std::string &key_name, bool active, Track::TrackColor KeyColor, bool UserTriggered = false);
 
-   void ResetActiveKeys() { m_key_colors.clear(); }
-
 private:
 
    struct NoteTexDimensions

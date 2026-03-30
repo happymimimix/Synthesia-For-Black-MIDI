@@ -285,6 +285,7 @@ void TitleState::Update()
       while (m_state.midi_in->KeepReading())
       {
          MidiEvent ev = m_state.midi_in->Read();
+         if (m_state.midi_out) m_state.midi_out->Write(ev);
          if (ev.Type() == MidiEventType_NoteOff || ev.Type() == MidiEventType_NoteOn)
          {
             string note = MidiEvent::NoteName(ev.NoteNumber());
@@ -295,7 +296,7 @@ void TitleState::Update()
             }
             else
             {
-               if (note == m_last_input_note_name) m_last_input_note_name = "";
+               m_last_input_note_name = "";
             }
          }
       }
