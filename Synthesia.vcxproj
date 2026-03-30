@@ -171,13 +171,6 @@
     <ClInclude Include="src\version.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="license.txt" />
-    <Text Include="readme.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="nsis_installer_script.nsi" />
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="src\resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

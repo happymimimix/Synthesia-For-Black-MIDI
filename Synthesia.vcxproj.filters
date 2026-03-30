@@ -210,19 +210,6 @@
     <ClInclude Include="src\SynthesiaError.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="license.txt">
-      <Filter>Resources</Filter>
-    </Text>
-    <Text Include="readme.txt">
-      <Filter>Resources</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="nsis_installer_script.nsi">
-      <Filter>Resources</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="src\resource.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
