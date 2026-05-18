@@ -230,8 +230,9 @@ void GameStateManager::Draw(Renderer &renderer)
    glTranslatef(0.375, 0.375, 0.);
 
    m_current_state->Draw(renderer);
-   TextWriter fps_writer(0, 0, renderer);
-   fps_writer << Text(WSTRING(L"FPS: "), Gray) << Text(WSTRING(std::setprecision(6) << m_fps.GetFramesPerSecond()), White);
+
+      TextWriter fps_writer(0, 0, renderer);
+      fps_writer << Text(WSTRING(L"FPS: "), Gray) << Text(WSTRING(std::setprecision(6) << m_fps.GetFramesPerSecond()), White);
    
    MouseInfo mouse = Mouse();
    glPushMatrix();

@@ -61,7 +61,7 @@ void TitleState::Init()
       {
          if (devices[i].name == last_output_device)
          {
-            m_state.midi_out = new MidiCommOut(devices[i].id);
+            m_state.midi_out = new MidiCommOut(i);
          }
       }
 
@@ -69,7 +69,7 @@ void TitleState::Init()
       // use the first one
       if (last_output_device != OutputKeySpecialDisabled && !m_state.midi_out && devices.size() > 0)
       {
-         m_state.midi_out = new MidiCommOut(devices[0].id);
+         m_state.midi_out = new MidiCommOut(0);
       }
    }
 
@@ -83,7 +83,7 @@ void TitleState::Init()
          {
             try
             {
-               m_state.midi_in = new MidiCommIn(devices[i].id);
+               m_state.midi_in = new MidiCommIn(i);
             }
             catch (MidiErrorCode)
             {
@@ -109,7 +109,7 @@ void TitleState::Init()
    int input_device_id = -1;
    if (m_state.midi_in)
    {
-      input_device_id = m_state.midi_in->GetDeviceDescription().id;
+      input_device_id = m_state.midi_in->GetDeviceDescription().id == UINT32_MAX - 1 ? MidiCommIn::GetDeviceList().size() - 1 : m_state.midi_in->GetDeviceDescription().id;
       m_state.midi_in->Reset();
    }
 

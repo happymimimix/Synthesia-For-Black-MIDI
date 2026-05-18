@@ -29,8 +29,8 @@ static constexpr unsigned long FRAME_DELAYS[3] = { 17, 17, 16 };
 
 void PlayingState::SetupNoteState()
 {
-   // The state field doesn't affect ordering, so we can
-   // just change it directly instead of rebuilding the set.
+   // The state field doesn't affect ordering, so we can just change it directly instead of rebuilding the set.
+
    for (TranslatedNoteSet::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
    {
       TranslatedNote &n = const_cast<TranslatedNote&>(*i);
@@ -230,19 +230,20 @@ void PlayingState::Listen()
       }
 
       TranslatedNoteSet::iterator closest_match = m_notes.end();
-      TranslatedNote search_key = {};
-      search_key.start = cur_time - (KeyboardDisplay::NoteWindowLength / 2);
-      for (TranslatedNoteSet::iterator i = m_notes.lower_bound(search_key); i != m_notes.end(); ++i)
+      for (TranslatedNoteSet::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
       {
+         const microseconds_t window_start = i->start - (KeyboardDisplay::NoteWindowLength / 2);
+         const microseconds_t window_end = i->start + (KeyboardDisplay::NoteWindowLength / 2);
+
          // As soon as we start processing notes that couldn't possibly
          // have been played yet, we're done.
-         if (i->start - (KeyboardDisplay::NoteWindowLength / 2) > cur_time) break;
+         if (window_start > cur_time) break;
 
-         if (i->note_id == ev.NoteNumber() && i->state == UserPlayable)
+         if (window_end > cur_time && i->note_id == ev.NoteNumber() && i->state == UserPlayable)
          {
-            // We've found a match!
-            closest_match = i;
-            break;
+               // We've found a match!
+               closest_match = i;
+               break;
          }
       }
 
@@ -254,12 +255,6 @@ void PlayingState::Listen()
 
          // "Open" this note so we can catch the close later and turn off
          // the note.
-         if (m_active_notes[closest_match->note_id].count(closest_match->channel) && m_state.midi_out)
-         {
-            MidiEvent offev = ev; // Make a copy first.
-            offev.SetVelocity(0);
-            m_state.midi_out->Write(offev);
-         }
          m_active_notes[closest_match->note_id].insert(closest_match->channel);
 
          // Play it
@@ -301,6 +296,8 @@ void PlayingState::Listen()
 
 void PlayingState::Update()
 {
+
+
    microseconds_t delta_microseconds = static_cast<microseconds_t>(m_state.framedump ? m_last_delta : GetDeltaMilliseconds()) * 1000;
 
    // The 100 term is really paired with the playback speed, but this
@@ -331,13 +328,13 @@ void PlayingState::Update()
       const microseconds_t window_end = note->start + (KeyboardDisplay::NoteWindowLength / 2);
       const microseconds_t window_finish = note->end - (KeyboardDisplay::NoteWindowLength / 2);
 
-      if (m_state.midi_in && (
-      (note->state == UserPlayable && window_end < cur_time)||
-      (note->state == UserHit && window_finish > cur_time && m_active_notes[note->note_id].empty())
-      ))
+      if (m_state.midi_in && (( note->state == UserPlayable && window_end < cur_time) ||
+      (note->state == UserHit && window_finish > cur_time && m_active_notes[note->note_id].empty()) ))
       {
          if (note->state == UserHit)
          {
+            // Early release penalty.
+
             const static double NoteValue = 90.0; // Minimum possible score
             m_state.stats.score -= NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
 
@@ -356,7 +353,7 @@ void PlayingState::Update()
          m_state.stats.speed_integral += m_state.song_speed;
       }
 
-      if (note->start > cur_time) { break; }
+      if (note->start > cur_time) break;
       else if (!m_state.midi_in && note->state == UserPlayable) {
          // Let's assume all notes are perfect when there's no midi input device.
          
@@ -373,8 +370,29 @@ void PlayingState::Update()
          const_cast<TranslatedNote&>(*note).state = UserHit;
          m_state.stats.total_notes_user_pressed++;
       }
+      
+      if (m_state.midi_in && m_state.midi_in->GetDeviceDescription().id == UINT32_MAX - 1 && note->state == UserPlayable) {
+         // Write midi input buffer for real!
+#ifdef WIN32
+         m_state.midi_in->InputCallback(MIM_DATA, (unsigned long(0x90 | note->channel)) | (unsigned long(note->note_id) << 8) | (unsigned long(note->velocity) << 16), NULL);
+#else
+         m_state.midi_in->InputCallback(0x90 | note->channel, note->note_id, note->velocity);
+#endif
+      }
 
-      if (note->end < cur_time && window_end < cur_time) m_notes.erase(note);
+      if (note->end < cur_time && m_state.midi_in && m_state.midi_in->GetDeviceDescription().id == UINT32_MAX - 1 && note->state == UserHit) {
+         // Write midi input buffer for real!
+#ifdef WIN32
+         m_state.midi_in->InputCallback(MIM_DATA, (unsigned long(0x90 | note->channel)) | (unsigned long(note->note_id) << 8) | (unsigned long(0x00) << 16), NULL);
+#else
+         m_state.midi_in->InputCallback(0x90 | note->channel, note->note_id, 0x00);
+#endif
+         const_cast<TranslatedNote&>(*note).state = AutoPlayed;
+      }
+
+      if (note->end < cur_time && window_end < cur_time)
+         m_notes.erase(note);
+
    }
 
    if (IsKeyPressed(KeyUp))
@@ -492,7 +510,7 @@ void PlayingState::Draw(Renderer &renderer) const
    wstring speed_text = WSTRING(m_state.song_speed << "%");
 
    TextWriter score(Layout::ScreenMarginX + 92, text_y + 3, renderer, false, Layout::ScoreFontSize);
-   score << static_cast<long>(m_state.stats.score);
+   score << static_cast<int>(m_state.stats.score);
 
    TextWriter multipliers(Layout::ScreenMarginX + 236, text_y + 9, renderer, false, Layout::TitleFontSize);
    multipliers << Text(multiplier_text, Renderer::ToColor(138, 226, 52));

@@ -9,7 +9,7 @@
 #include "../string_util.h"
 using namespace std;
 
-MidiEvent MidiEvent::ReadFromStream(std::istream &stream, unsigned char last_status, bool contains_delta_pulses)
+MidiEvent MidiEvent::ReadFromStream(istream &stream, unsigned char last_status, bool contains_delta_pulses)
 {
    MidiEvent ev;
 
@@ -70,7 +70,7 @@ void MidiEvent::ReadMeta(std::istream &stream)
    stream.read(reinterpret_cast<char*>(&m_meta_type), sizeof(unsigned char));
    unsigned long meta_length = parse_variable_length(stream);
 
-   char *buffer = new char[static_cast<size_t>(meta_length) + 1];
+   char *buffer = new char[meta_length + 1];
    buffer[meta_length] = 0;
 
    stream.read(buffer, meta_length);

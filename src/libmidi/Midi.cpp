@@ -454,7 +454,7 @@ void Midi::Reset(microseconds_t lead_in_microseconds, microseconds_t lead_out_mi
    for (MidiTrackList::iterator i = m_tracks.begin(); i != m_tracks.end(); ++i) { i->Reset(); }
 }
 
-void Midi::TranslateNotes(const NoteSet& notes, unsigned short pulses_per_quarter_note, unsigned short track_id)
+void Midi::TranslateNotes(const NoteSet &notes, unsigned short pulses_per_quarter_note, unsigned short track_id)
 {
    size_t tempo_hint = 0;
    for (NoteSet::const_iterator i = notes.begin(); i != notes.end(); ++i)

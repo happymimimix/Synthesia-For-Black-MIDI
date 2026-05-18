@@ -15,7 +15,6 @@ public:
    StatsState(const SharedState &state)
       : m_state(state)
    { }
-
    ~StatsState() { Compatible::ShowMouseCursor(); }
 
 protected:

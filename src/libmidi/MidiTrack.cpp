@@ -64,20 +64,19 @@ MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
    // End-Of-Track event, but this allows us handle malformed MIDI a
    // little more gracefully.
    track_length = BigToSystem32(track_length);
+   char *buffer = new char[track_length];
 
-   std::vector<char> buffer(track_length);
-   stream.read(buffer.data(), track_length);
-
+   stream.read(buffer, track_length);
    if (stream.fail())
    {
-      std::vector<char>().swap(buffer);
+      delete[] buffer;
       throw MidiError(MidiError_TrackTooShort);
    }
 
-   // Read directly from the buffer in memory, avoiding the
-   // double-copy that istringstream would require.
-   MemoryReadBuffer membuf(buffer.data(), track_length);
-   std::istream event_stream(&membuf);
+   // We have to jump through a couple hoops because istringstream
+   // can't handle binary data unless constructed through an std::string. 
+   MemoryReadBuffer membuf(buffer, track_length);
+   istream event_stream(&membuf);
 
    MidiTrack t;
 
@@ -97,6 +96,7 @@ MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
 
    t.DiscoverInstrument();
 
+   delete[] buffer;
    return t;
 }
 
@@ -119,7 +119,7 @@ void MidiTrack::BuildNoteSet()
    // begin a new one.
    //
    // A note_on with velocity 0 is a note_off
-   std::array<std::queue<NoteInfo>,0x100> m_active_notes;
+   array<queue<NoteInfo>, 0x100> m_active_notes;
 
    for (size_t i = 0; i < m_events.size(); ++i)
    {
@@ -178,6 +178,9 @@ void MidiTrack::DiscoverInstrument()
    m_instrument_id = 0;
    bool instrument_found = false;
 
+   // These are actually 10 and 16 in the MIDI standard.  However, MIDI
+   // channels are 1-based facing the user.  They're stored 0-based.
+   const static int PercussionChannel1 = 9;
 
    // Check to see if any/all of the notes
    // in this track use Channel 10.
@@ -189,8 +192,8 @@ void MidiTrack::DiscoverInstrument()
       const MidiEvent &ev = m_events[i];
       if (ev.Type() != MidiEventType_NoteOn) continue;
 
-      if (ev.Channel() == 9) any_note_uses_percussion = true;
-      if (ev.Channel() != 9) any_note_does_not_use_percussion = true;
+      if (ev.Channel() == PercussionChannel1) any_note_uses_percussion = true;
+      if (ev.Channel() != PercussionChannel1) any_note_does_not_use_percussion = true;
    }
 
    if (any_note_uses_percussion && !any_note_does_not_use_percussion)

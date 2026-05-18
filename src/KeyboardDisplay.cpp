@@ -168,8 +168,8 @@ void KeyboardDisplay::DrawWhiteKeys(Renderer &renderer, const Tga *tex, bool act
       // Check to see if this is one of the active notes
       const string note_name = STRING(current_white << current_octave);
 
-      KeyColors::const_iterator find_result = m_key_colors.find(note_name);
-      bool active = (find_result != m_key_colors.end() && !find_result->second.empty());
+      KeyNames::const_iterator find_result = m_active_keys.find(note_name);
+      bool active = (find_result != m_active_keys.end() && !find_result->second.empty());
 
       Color c = white;
       if (active) c = Track::ColorNoteWhite[find_result->second.back().KeyColor];
@@ -236,8 +236,8 @@ void KeyboardDisplay::DrawBlackKeys(Renderer &renderer, const Tga *tex, bool act
             // Check to see if this is one of the active notes
             const string note_name = STRING(current_white << '#' << current_octave);
 
-            KeyColors::const_iterator find_result = m_key_colors.find(note_name);
-            bool active = (find_result != m_key_colors.end() && !find_result->second.empty());
+            KeyNames::const_iterator find_result = m_active_keys.find(note_name);
+            bool active = (find_result != m_active_keys.end() && !find_result->second.empty());
 
             // In this case, MissedNote isn't actually MissedNote.  In the black key
             // texture we use this value (which doesn't make any sense in this context)
@@ -515,12 +515,12 @@ void KeyboardDisplay::SetKeyActive(const string &key_name, bool active, Track::T
       KeyActivation entry;
       entry.KeyColor = KeyColor;
       entry.UserTriggered = UserTriggered;
-      m_key_colors[key_name].push_back(entry);
+      m_active_keys[key_name].push_back(entry);
    }
    else
    {
-      KeyColors::iterator find_result = m_key_colors.find(key_name);
-      if (find_result != m_key_colors.end())
+      KeyNames::iterator find_result = m_active_keys.find(key_name);
+      if (find_result != m_active_keys.end())
       {
          std::vector<KeyActivation>& entries = find_result->second;
          // Find and remove the last instance of this color (matching Synthesia 0.8.x exactly)
@@ -541,7 +541,7 @@ void KeyboardDisplay::SetKeyActive(const string &key_name, bool active, Track::T
          }
          if (entries.empty())
          {
-            m_key_colors.erase(find_result);
+            m_active_keys.erase(find_result);
          }
       }
    }

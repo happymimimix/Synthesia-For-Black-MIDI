@@ -77,6 +77,12 @@ MidiCommDescriptionList MidiCommIn::GetDeviceList()
       devices.push_back(d);
    }
 
+   MidiCommDescription dummy_d;
+   dummy_d.id = UINT32_MAX-1;
+   dummy_d.name = L"Real SFBM Autoplay Bot (Writes MIDI Input Buffer FOR REAL!)";
+
+   devices.push_back(dummy_d);
+
    return devices;
 }
 
@@ -85,6 +91,11 @@ MidiCommIn::MidiCommIn(unsigned int device_id)
    m_description = GetDeviceList()[device_id];
 
    InitializeCriticalSection(&m_buffer_mutex);
+
+   if (m_description.id == UINT32_MAX - 1) {
+      m_input_device = NULL;
+      return;
+   }
 
    midi_check(midiInOpen(&m_input_device, device_id,
       reinterpret_cast<DWORD_PTR>(MidiInputCallback),
@@ -96,9 +107,11 @@ MidiCommIn::MidiCommIn(unsigned int device_id)
 
 MidiCommIn::~MidiCommIn()
 {
+   if (this->m_description.id != UINT32_MAX - 1) {
    midi_check(midiInStop(m_input_device));
    midi_check(midiInReset(m_input_device));
    midi_check(midiInClose(m_input_device));
+   }
 
    DeleteCriticalSection(&m_buffer_mutex);
 }
@@ -377,7 +390,13 @@ MidiCommDescriptionList MidiCommIn::GetDeviceList()
       CFRelease(cf_name);
       
       devices.push_back(d);
-   }   
+   }
+
+   MidiCommDescription dummy_d;
+   dummy_d.id = UINT32_MAX-1;
+   dummy_d.name = "Real SFBM Autoplay Bot (Writes MIDI Input Buffer FOR REAL!)";
+
+   devices.push_back(dummy_d);
 
    built_input_list = true;
    return devices;
@@ -402,6 +421,11 @@ MidiCommIn::MidiCommIn(unsigned int device_id)
 
    m_description = MidiCommIn::GetDeviceList()[device_id];
 
+   if (m_description.id == UINT32_MAX - 1) {
+      m_input_device = NULL;
+      return;
+   }
+
    MIDIClientCreate(CFSTR("SFBM"), 0, this, &m_client);
    MIDIInputPortCreate(m_client, CFSTR("SFBM_MIDI_INPUT"), midi_input, this, &m_port);
    
@@ -411,6 +435,7 @@ MidiCommIn::MidiCommIn(unsigned int device_id)
 
 MidiCommIn::~MidiCommIn()
 {
+   if (this->m_description.id != UINT32_MAX - 1) {
    MIDIEndpointRef source = MIDIGetSource(m_description.id);
    MIDIPortDisconnectSource(m_port, source);
 
@@ -418,6 +443,7 @@ MidiCommIn::~MidiCommIn()
    MIDIClientDispose(m_client);
 
    pthread_mutex_destroy(&m_mutex);
+   }
 }
 
 void MidiCommIn::InputCallback(unsigned int status, unsigned long byte1, unsigned long byte2)

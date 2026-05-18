@@ -27,7 +27,7 @@ struct KeyActivation
     bool UserTriggered;
 };
 
-typedef std::unordered_map<std::string, std::vector<KeyActivation>> KeyColors;
+typedef std::unordered_map<std::string, std::vector<KeyActivation>> KeyNames;
 
 class Renderer;
 class Tga;
@@ -123,7 +123,7 @@ private:
    int GetWhiteKeyCount() const;
 
    KeyboardSize m_size;
-   KeyColors m_key_colors;
+   KeyNames m_active_keys;
 
    int m_width;
    int m_height;
