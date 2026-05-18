@@ -241,9 +241,14 @@ void PlayingState::Listen()
 
          if (window_end > cur_time && i->note_id == ev.NoteNumber() && i->state == UserPlayable)
          {
-               // We've found a match!
+            // We've found a match!
+            if (closest_match == m_notes.end()) closest_match = i;
+            if (i->channel == ev.Channel()){
+               // We've found a SUPER CLOSE match!
                closest_match = i;
+               // There's no way we'll ever find an EVEN CLOSER match than this one so let's BREAK.
                break;
+            }
          }
       }
 
@@ -370,7 +375,8 @@ void PlayingState::Update()
          const_cast<TranslatedNote&>(*note).state = UserHit;
          m_state.stats.total_notes_user_pressed++;
       }
-      
+
+#ifndef NOAI
       if (m_state.midi_in && m_state.midi_in->GetDeviceDescription().id == UINT32_MAX - 1 && note->state == UserPlayable) {
          // Write midi input buffer for real!
 #ifdef WIN32
@@ -389,6 +395,7 @@ void PlayingState::Update()
 #endif
          const_cast<TranslatedNote&>(*note).state = AutoPlayed;
       }
+#endif
 
       if (note->end < cur_time && window_end < cur_time)
          m_notes.erase(note);
