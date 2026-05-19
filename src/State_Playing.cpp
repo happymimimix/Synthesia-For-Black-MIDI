@@ -396,7 +396,7 @@ void PlayingState::Update()
       }
 #endif
 
-      if ( window_end < cur_time)
+      if (note->end < cur_time && window_end < cur_time)
          m_notes.erase(note);
 
    }
