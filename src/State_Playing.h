@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 #include <array>
-#include <unordered_set>
 
 #include "SharedState.h"
 #include "GameState.h"
@@ -20,7 +19,7 @@ class MidiCommOut;
 class MidiCommIn;
 
 typedef unsigned char ActiveNoteChan;
-typedef std::unordered_multiset<ActiveNoteChan> ActiveNoteSetItem;
+typedef std::multiset<ActiveNoteChan> ActiveNoteSetItem;
 typedef std::array<ActiveNoteSetItem, 0x100> ActiveNoteSet;
 typedef std::array<microseconds_t, 0x100> KeyReleaseTime;
 

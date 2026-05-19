@@ -522,10 +522,10 @@ void KeyboardDisplay::SetKeyActive(const string &key_name, bool active, Track::T
       KeyNames::iterator find_result = m_active_keys.find(key_name);
       if (find_result != m_active_keys.end())
       {
-         std::vector<KeyActivation>& entries = find_result->second;
+         std::list<KeyActivation>& entries = find_result->second;
          // Find and remove the last instance of this color (matching Synthesia 0.8.x exactly)
          bool Found = false;
-         for (std::vector<KeyActivation>::const_iterator color_it = entries.end(); color_it != entries.begin();)
+         for (std::list<KeyActivation>::const_iterator color_it = entries.end(); color_it != entries.begin();)
          {
             color_it--;
             if ((color_it->UserTriggered && UserTriggered) || color_it->KeyColor == KeyColor)

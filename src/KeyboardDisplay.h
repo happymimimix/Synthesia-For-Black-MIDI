@@ -6,7 +6,6 @@
 #define __KEYBOARDDISPLAY_H
 
 #include <unordered_map>
-#include <vector>
 #include <string>
 
 #include "TrackTile.h"
@@ -27,7 +26,7 @@ struct KeyActivation
     bool UserTriggered;
 };
 
-typedef std::unordered_map<std::string, std::vector<KeyActivation>> KeyNames;
+typedef std::unordered_map<std::string, std::list<KeyActivation>> KeyNames;
 
 class Renderer;
 class Tga;
