@@ -199,7 +199,7 @@ void PlayingState::Listen()
       if (ev.Type() != MidiEventType_NoteOn && ev.Type() != MidiEventType_NoteOff) {
          if (m_state.midi_out) m_state.midi_out->Write(ev);
          continue;
-      }
+      } else {
 
       string note_name = MidiEvent::NoteName(ev.NoteNumber());
 
@@ -227,19 +227,16 @@ void PlayingState::Listen()
 
          m_keyboard->SetKeyActive(note_name, false, Track::FlatGray, true);
          continue;
-      }
+      } else {
 
       TranslatedNoteSet::iterator closest_match = m_notes.end();
       for (TranslatedNoteSet::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
       {
-         const microseconds_t window_start = i->start - (KeyboardDisplay::NoteWindowLength / 2);
-         const microseconds_t window_end = i->start + (KeyboardDisplay::NoteWindowLength / 2);
-
          // As soon as we start processing notes that couldn't possibly
          // have been played yet, we're done.
-         if (window_start > cur_time) break;
+         if (i->start - (KeyboardDisplay::NoteWindowLength / 2) > cur_time) break;
 
-         if (window_end > cur_time && i->note_id == ev.NoteNumber() && i->state == UserPlayable)
+         if (i->note_id == ev.NoteNumber() && i->state == UserPlayable)
          {
             // We've found a match!
             if (closest_match == m_notes.end()) closest_match = i;
@@ -296,6 +293,8 @@ void PlayingState::Listen()
 
       m_state.stats.total_notes_user_pressed++;
       m_keyboard->SetKeyActive(note_name, true, note_color, true);
+
+      } }
    }
 }
 
@@ -397,7 +396,7 @@ void PlayingState::Update()
       }
 #endif
 
-      if (note->end < cur_time && window_end < cur_time)
+      if ( window_end < cur_time)
          m_notes.erase(note);
 
    }

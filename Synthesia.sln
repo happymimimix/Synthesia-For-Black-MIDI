@@ -10,6 +10,7 @@ Global
 		128k|MicrosoftWindows64Bit = 128k|MicrosoftWindows64Bit
 		256k|MicrosoftWindows64Bit = 256k|MicrosoftWindows64Bit
 		NoAI|MicrosoftWindows64Bit = NoAI|MicrosoftWindows64Bit
+		NoAI256|MicrosoftWindows64Bit = NoAI256|MicrosoftWindows64Bit
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{39F61D85-03F7-4874-A767-2675F4CD1545}.128k|MicrosoftWindows64Bit.ActiveCfg = 128k|x64
@@ -18,6 +19,8 @@ Global
 		{39F61D85-03F7-4874-A767-2675F4CD1545}.256k|MicrosoftWindows64Bit.Build.0 = 256k|x64
 		{39F61D85-03F7-4874-A767-2675F4CD1545}.NoAI|MicrosoftWindows64Bit.ActiveCfg = NoAI|x64
 		{39F61D85-03F7-4874-A767-2675F4CD1545}.NoAI|MicrosoftWindows64Bit.Build.0 = NoAI|x64
+		{39F61D85-03F7-4874-A767-2675F4CD1545}.NoAI256|MicrosoftWindows64Bit.ActiveCfg = NoAI256|x64
+		{39F61D85-03F7-4874-A767-2675F4CD1545}.NoAI256|MicrosoftWindows64Bit.Build.0 = NoAI256|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
