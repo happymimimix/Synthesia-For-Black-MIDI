@@ -230,7 +230,9 @@ void PlayingState::Listen()
       } else {
 
       TranslatedNoteSet::iterator closest_match = m_notes.end();
-      for (TranslatedNoteSet::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
+      TranslatedNote search_key = {};
+      search_key.start = cur_time - (KeyboardDisplay::NoteWindowLength / 2);
+      for (TranslatedNoteSet::iterator i = m_notes.lower_bound(search_key); i != m_notes.end(); ++i)
       {
          // As soon as we start processing notes that couldn't possibly
          // have been played yet, we're done.
