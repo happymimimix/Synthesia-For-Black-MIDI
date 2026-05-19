@@ -346,15 +346,16 @@ void PlayingState::Update()
       TranslatedNoteSet::iterator note = i++;
 
       const microseconds_t window_end = note->start + (KeyboardDisplay::NoteWindowLength / 2);
-      const microseconds_t window_finish = note->end - KeyboardDisplay::NoteWindowLength;
+      const microseconds_t window_finish = note->end - (KeyboardDisplay::NoteWindowLength / 2);
 
       if (m_state.midi_in && (( note->state == UserPlayable && window_end < cur_time) ||
-      (note->state == UserHit && window_finish > cur_time && m_active_notes[note->note_id].empty() && m_release_time[note->note_id] + KeyboardDisplay::NoteWindowLength < cur_time) ))
+      (note->state == UserHit && window_finish > cur_time && m_active_notes[note->note_id].empty() && m_release_time[note->note_id] + (KeyboardDisplay::NoteWindowLength / 2) < cur_time) ))
       {
          if (note->state == UserHit)
          {
             // Early release penalty.
-            const static double NoteValue = 50.0;
+            double tier_multiplier = 0.85;
+            const double NoteValue = tier_multiplier * 100.0;
             m_state.stats.score -= NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
 
             m_state.stats.notes_user_could_have_played--;
@@ -376,7 +377,14 @@ void PlayingState::Update()
       else if (!m_state.midi_in && note->state == UserPlayable) {
          // Let's assume all notes are perfect when there's no midi input device.
          
-         const static double NoteValue = 115.0; // Maximum possible score
+         double accuracy = 1.0; // Always perfect accuracy
+         double tier_multiplier = 0.90;
+         if (accuracy > 0.9)  tier_multiplier = 1.15;
+         else if (accuracy > 0.75) tier_multiplier = 1.10;
+         else if (accuracy > 0.4) tier_multiplier = 1.05;
+         else if (accuracy > 0.3) tier_multiplier = 1.00;
+         else if (accuracy > 0.1) tier_multiplier = 0.95;
+         const double NoteValue = tier_multiplier * 100.0;
          m_state.stats.score += NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
 
          m_state.stats.notes_user_could_have_played++;
