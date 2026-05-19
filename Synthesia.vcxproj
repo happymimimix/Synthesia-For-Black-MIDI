@@ -56,6 +56,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='256k|x64'">
     <TargetName>$(ProjectName)256</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='NoAI|x64'">
+    <TargetName>$(ProjectName)NoAI</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='NoAI256|x64'">
+    <TargetName>$(ProjectName)NoAI256</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='128k|x64'" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='128k|x64'">
     <ClCompile>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
