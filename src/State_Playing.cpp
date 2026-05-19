@@ -64,7 +64,7 @@ void PlayingState::ResetSong()
 
 PlayingState::PlayingState(const SharedState &state)
    : m_state(state), m_keyboard(0), m_first_update(true), m_paused(true), m_any_you_play_tracks(false)
-{ }
+{ m_release_time.fill(INT64_MIN); }
 string GetExePath(void) {
     char szFilePath[MAX_PATH + 1] = { 0 };
     GetModuleFileNameA(NULL, szFilePath, MAX_PATH);
@@ -172,6 +172,17 @@ void PlayingState::Play(microseconds_t delta_microseconds)
       }
 
       if (play && m_state.midi_out) m_state.midi_out->Write(ev);
+
+#ifndef NOAI
+      if (m_state.track_properties[track_id].mode == Track::ModeYouPlay && m_state.midi_in && m_state.midi_in->GetDeviceDescription().id == UINT32_MAX-1 && (ev.Type() == MidiEventType_NoteOn || ev.Type() == MidiEventType_NoteOff)) {
+         // Write midi input buffer for real!
+#ifdef WIN32
+         m_state.midi_in->InputCallback(MIM_DATA, (unsigned long(ev.StatusCode())) | (unsigned long(ev.NoteNumber()) << 8) | (unsigned long(ev.NoteVelocity()) << 16), NULL);
+#else
+         m_state.midi_in->InputCallback(ev.StatusCode(), ev.NoteNumber(), ev.NoteVelocity());
+#endif
+      }
+#endif
    }
 }
 
@@ -220,6 +231,8 @@ void PlayingState::Listen()
                if (m_state.midi_out) m_state.midi_out->Write(ev);
                m_active_notes[ev.NoteNumber()].erase(matched);
             }
+
+            if (m_active_notes[ev.NoteNumber()].empty()) m_release_time[ev.NoteNumber()] = cur_time;
          }
          else {
             if (m_state.midi_out) m_state.midi_out->Write(ev);
@@ -289,6 +302,7 @@ void PlayingState::Listen()
       }
       else
       {
+         m_active_notes[ev.NoteNumber()].insert(ev.Channel());
          if (m_state.midi_out) m_state.midi_out->Write(ev);
          m_state.stats.stray_notes++;
       }
@@ -332,16 +346,15 @@ void PlayingState::Update()
       TranslatedNoteSet::iterator note = i++;
 
       const microseconds_t window_end = note->start + (KeyboardDisplay::NoteWindowLength / 2);
-      const microseconds_t window_finish = note->end - (KeyboardDisplay::NoteWindowLength / 2);
+      const microseconds_t window_finish = note->end - KeyboardDisplay::NoteWindowLength;
 
       if (m_state.midi_in && (( note->state == UserPlayable && window_end < cur_time) ||
-      (note->state == UserHit && window_finish > cur_time && m_active_notes[note->note_id].empty()) ))
+      (note->state == UserHit && window_finish > cur_time && m_active_notes[note->note_id].empty() && m_release_time[note->note_id] + KeyboardDisplay::NoteWindowLength < cur_time) ))
       {
          if (note->state == UserHit)
          {
             // Early release penalty.
-
-            const static double NoteValue = 90.0; // Minimum possible score
+            const static double NoteValue = 50.0;
             m_state.stats.score -= NoteValue * CalculateScoreMultiplier() * (m_state.song_speed / 100.0);
 
             m_state.stats.notes_user_could_have_played--;
@@ -376,27 +389,6 @@ void PlayingState::Update()
          const_cast<TranslatedNote&>(*note).state = UserHit;
          m_state.stats.total_notes_user_pressed++;
       }
-
-#ifndef NOAI
-      if (m_state.midi_in && m_state.midi_in->GetDeviceDescription().id == UINT32_MAX - 1 && note->state == UserPlayable) {
-         // Write midi input buffer for real!
-#ifdef WIN32
-         m_state.midi_in->InputCallback(MIM_DATA, (unsigned long(0x90 | note->channel)) | (unsigned long(note->note_id) << 8) | (unsigned long(note->velocity) << 16), NULL);
-#else
-         m_state.midi_in->InputCallback(0x90 | note->channel, note->note_id, note->velocity);
-#endif
-      }
-
-      if (note->end < cur_time && m_state.midi_in && m_state.midi_in->GetDeviceDescription().id == UINT32_MAX - 1 && note->state == UserHit) {
-         // Write midi input buffer for real!
-#ifdef WIN32
-         m_state.midi_in->InputCallback(MIM_DATA, (unsigned long(0x90 | note->channel)) | (unsigned long(note->note_id) << 8) | (unsigned long(0x00) << 16), NULL);
-#else
-         m_state.midi_in->InputCallback(0x90 | note->channel, note->note_id, 0x00);
-#endif
-         const_cast<TranslatedNote&>(*note).state = AutoPlayed;
-      }
-#endif
 
       if (note->end < cur_time && window_end < cur_time)
          m_notes.erase(note);

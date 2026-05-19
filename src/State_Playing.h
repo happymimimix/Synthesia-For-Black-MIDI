@@ -22,6 +22,7 @@ class MidiCommIn;
 typedef unsigned char ActiveNoteChan;
 typedef std::unordered_multiset<ActiveNoteChan> ActiveNoteSetItem;
 typedef std::array<ActiveNoteSetItem, 0x100> ActiveNoteSet;
+typedef std::array<microseconds_t, 0x100> KeyReleaseTime;
 
 class PlayingState : public GameState
 {
@@ -54,7 +55,8 @@ private:
    bool m_any_you_play_tracks;
    size_t m_look_ahead_you_play_note_count;
 
-   ActiveNoteSet m_active_notes;
+   ActiveNoteSet m_active_notes = {};
+   KeyReleaseTime m_release_time = {};
 
    bool m_first_update;
 

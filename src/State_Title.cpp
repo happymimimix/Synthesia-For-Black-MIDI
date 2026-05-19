@@ -109,7 +109,11 @@ void TitleState::Init()
    int input_device_id = -1;
    if (m_state.midi_in)
    {
-      input_device_id = m_state.midi_in->GetDeviceDescription().id == UINT32_MAX - 1 ? MidiCommIn::GetDeviceList().size() - 1 : m_state.midi_in->GetDeviceDescription().id;
+#ifndef NOAI
+      input_device_id = m_state.midi_in->GetDeviceDescription().id == UINT32_MAX-1 ? MidiCommIn::GetDeviceList().size()-1 : m_state.midi_in->GetDeviceDescription().id;
+#else
+      input_device_id = m_state.midi_in->GetDeviceDescription().id;
+#endif
       m_state.midi_in->Reset();
    }
 
@@ -253,7 +257,11 @@ void TitleState::Update()
 
 
    int input_id = m_input_tile->GetDeviceId();
+#ifndef NOAI
+   if (!m_state.midi_in || input_id != static_cast<int>(m_state.midi_in->GetDeviceDescription().id == UINT32_MAX-1 ? MidiCommIn::GetDeviceList().size()-1 : m_state.midi_in->GetDeviceDescription().id))
+#else
    if (!m_state.midi_in || input_id != static_cast<int>(m_state.midi_in->GetDeviceDescription().id))
+#endif
    {
       if (m_state.midi_in) m_state.midi_in->Reset();
       m_last_input_note_name = "";
@@ -285,7 +293,7 @@ void TitleState::Update()
       while (m_state.midi_in->KeepReading())
       {
          MidiEvent ev = m_state.midi_in->Read();
-         if (m_state.midi_out) m_state.midi_out->Write(ev);
+         if (m_state.midi_out && m_state.midi_in->GetDeviceDescription().id != UINT32_MAX - 1) m_state.midi_out->Write(ev);
          if (ev.Type() == MidiEventType_NoteOff || ev.Type() == MidiEventType_NoteOn)
          {
             string note = MidiEvent::NoteName(ev.NoteNumber());
@@ -367,6 +375,17 @@ void TitleState::PlayDevicePreview(microseconds_t delta_microseconds)
    for (MidiEventListWithTrackId::const_iterator i = evs.begin(); i != evs.end(); ++i)
    {
       m_state.midi_out->Write(i->second);
+
+#ifndef NOAI
+      if (m_state.midi_in && m_state.midi_in->GetDeviceDescription().id == UINT32_MAX - 1 && (i->second.Type() == MidiEventType_NoteOn || i->second.Type() == MidiEventType_NoteOff)) {
+         // Write midi input buffer for real!
+#ifdef WIN32
+         m_state.midi_in->InputCallback(MIM_DATA, (unsigned long(i->second.StatusCode())) | (unsigned long(i->second.NoteNumber()) << 8) | (unsigned long(i->second.NoteVelocity()) << 16), NULL);
+#else
+         m_state.midi_in->InputCallback(i->second.StatusCode(), i->second.NoteNumber(), i->second.NoteVelocity());
+#endif
+      }
+#endif
    }
 }
 
