@@ -238,10 +238,11 @@ void PlayingState::Listen()
             for (ActiveNoteSetItem::const_iterator it = m_active_notes[ev.NoteNumber()].end(); it != m_active_notes[ev.NoteNumber()].begin();)
             {
                it--;
-               if (*it == ev.Channel())
+               if (it->channel == ev.Channel())
                {
                   // Try to find one that match the channel exactly first.
                   if (m_state.midi_out) m_state.midi_out->Write(ev);
+                  m_keyboard->SetKeyActive(note_name, false, it->color, true);
                   m_active_notes[ev.NoteNumber()].erase(it);
                   Found = true;
                   break;
@@ -249,8 +250,9 @@ void PlayingState::Listen()
             }
             if (!Found) {
                // If not found, pick the last item and override the channel.
-               ev.SetChannel(m_active_notes[ev.NoteNumber()].back());
+               ev.SetChannel(m_active_notes[ev.NoteNumber()].back().channel);
                if (m_state.midi_out) m_state.midi_out->Write(ev);
+               m_keyboard->SetKeyActive(note_name, false, m_active_notes[ev.NoteNumber()].back().color, true);
                m_active_notes[ev.NoteNumber()].pop_back();
             }
             if (m_active_notes[ev.NoteNumber()].empty()) m_release_time[ev.NoteNumber()] = cur_time;
@@ -259,7 +261,6 @@ void PlayingState::Listen()
             if (m_state.midi_out) m_state.midi_out->Write(ev);
          }
 
-         m_keyboard->SetKeyActive(note_name, false, Track::FlatGray, true);
          continue;
       } else {
 
@@ -289,7 +290,7 @@ void PlayingState::Listen()
 
          // "Open" this note so we can catch the close later and turn off
          // the note.
-         m_active_notes[closest_match->note_id].push_back(closest_match->channel);
+         m_active_notes[closest_match->note_id].push_back({ closest_match->channel, note_color });
 
          // Play it
          ev.SetChannel(closest_match->channel);
@@ -320,7 +321,7 @@ void PlayingState::Listen()
       }
       else
       {
-         m_active_notes[ev.NoteNumber()].push_back(ev.Channel());
+         m_active_notes[ev.NoteNumber()].push_back({ ev.Channel(),note_color });
          if (m_state.midi_out) m_state.midi_out->Write(ev);
          m_state.stats.stray_notes++;
       }

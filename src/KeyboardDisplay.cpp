@@ -528,7 +528,7 @@ void KeyboardDisplay::SetKeyActive(const string &key_name, bool active, Track::T
          for (std::list<KeyActivation>::const_iterator color_it = entries.end(); color_it != entries.begin();)
          {
             color_it--;
-            if ((color_it->UserTriggered && UserTriggered) || color_it->KeyColor == KeyColor)
+            if (color_it->UserTriggered == UserTriggered && color_it->KeyColor == KeyColor)
             {
                entries.erase(color_it);
                Found = true;

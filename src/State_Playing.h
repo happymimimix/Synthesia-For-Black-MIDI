@@ -18,7 +18,10 @@ class Midi;
 class MidiCommOut;
 class MidiCommIn;
 
-typedef unsigned char ActiveNoteChan;
+struct ActiveNoteChan {
+   unsigned char channel;
+   Track::TrackColor color;
+};
 typedef std::list<ActiveNoteChan> ActiveNoteSetItem;
 typedef std::array<ActiveNoteSetItem, 0x100> ActiveNoteSet;
 typedef std::array<microseconds_t, 0x100> KeyReleaseTime;
