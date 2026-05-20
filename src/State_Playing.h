@@ -19,8 +19,8 @@ class MidiCommOut;
 class MidiCommIn;
 
 struct ActiveNoteChan {
-   unsigned char channel;
    Track::TrackColor color;
+   unsigned char channel;
 };
 typedef std::list<ActiveNoteChan> ActiveNoteSetItem;
 typedef std::array<ActiveNoteSetItem, 0x100> ActiveNoteSet;

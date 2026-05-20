@@ -290,7 +290,7 @@ void PlayingState::Listen()
 
          // "Open" this note so we can catch the close later and turn off
          // the note.
-         m_active_notes[closest_match->note_id].push_back({ closest_match->channel, note_color });
+         m_active_notes[closest_match->note_id].push_back({ note_color, closest_match->channel });
 
          // Play it
          ev.SetChannel(closest_match->channel);
@@ -321,7 +321,7 @@ void PlayingState::Listen()
       }
       else
       {
-         m_active_notes[ev.NoteNumber()].push_back({ ev.Channel(),note_color });
+         m_active_notes[ev.NoteNumber()].push_back({ note_color,ev.Channel() });
          if (m_state.midi_out) m_state.midi_out->Write(ev);
          m_state.stats.stray_notes++;
       }
