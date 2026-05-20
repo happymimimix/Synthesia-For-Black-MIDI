@@ -57,7 +57,6 @@ void PlayingState::ResetSong()
    SetupNoteState();
 
    m_state.stats = SongStatistics();
-   m_state.stats.total_note_count = static_cast<int>(m_notes.size());
 
    m_current_combo = 0;
 }

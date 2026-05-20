@@ -104,7 +104,7 @@ struct NoteInfo
 {
    unsigned char velocity;
    unsigned char channel;
-   unsigned long pulses;
+   microseconds_t microseconds;
 };
 
 void MidiTrack::BuildNoteSet(TranslatedNoteSet* translated_notes, unsigned short pulses_per_quarter_note, unsigned short track_id, Midi* self, microseconds_t(Midi:: *PtrToGetEventPulseInMicroseconds)(unsigned long, unsigned short, size_t&) const)
@@ -138,21 +138,20 @@ void MidiTrack::BuildNoteSet(TranslatedNoteSet* translated_notes, unsigned short
          trans.track_id = track_id;
          trans.channel = find_ret.channel;
          trans.velocity = find_ret.velocity;
-         trans.start = (self->*PtrToGetEventPulseInMicroseconds)(find_ret.pulses, pulses_per_quarter_note, tempo_hint);
-         size_t end_hint = tempo_hint; // Make a copy
-         trans.end = (self->*PtrToGetEventPulseInMicroseconds)(m_event_pulses[i], pulses_per_quarter_note, end_hint);
+         trans.start = find_ret.microseconds;
+         trans.end = (self->*PtrToGetEventPulseInMicroseconds)(m_event_pulses[i], pulses_per_quarter_note, tempo_hint);
 
          // Add a note and remove this NoteId from the active list
          translated_notes->insert(trans);
          m_active_notes[ev.NoteNumber()].pop();
 
          m_note_count++;
-      } else {
+      } else if (on) {
       // Add a new active event
       NoteInfo info;
       info.channel = ev.Channel();
       info.velocity = ev.NoteVelocity();
-      info.pulses = m_event_pulses[i];
+      info.microseconds = (self->*PtrToGetEventPulseInMicroseconds)(m_event_pulses[i], pulses_per_quarter_note, tempo_hint);
 
       m_active_notes[ev.NoteNumber()].push(info);
       }

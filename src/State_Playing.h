@@ -63,7 +63,7 @@ private:
    bool m_first_update;
 
    SharedState m_state;
-   int m_current_combo;
+   unsigned int m_current_combo;
 
    unsigned long m_last_delta;
    uint8_t m_delay_idx;
