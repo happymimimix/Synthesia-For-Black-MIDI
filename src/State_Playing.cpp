@@ -370,7 +370,8 @@ void PlayingState::Update()
       const microseconds_t window_finish = note->end - (KeyboardDisplay::NoteWindowLength / 2);
 
       if (m_state.midi_in && (( note->state == UserPlayable && window_end < cur_time) ||
-      (note->state == UserHit && window_finish > cur_time && m_active_notes[note->note_id].empty() && m_release_time[note->note_id] + (KeyboardDisplay::NoteWindowLength / 2) < cur_time) ))
+      (note->state == UserHit && window_finish > cur_time && m_active_notes[note->note_id].empty() &&
+      m_release_time[note->note_id] + (KeyboardDisplay::NoteWindowLength / 2) < cur_time) ))
       {
          if (note->state == UserHit)
          {
@@ -419,7 +420,7 @@ void PlayingState::Update()
          m_state.stats.total_notes_user_pressed++;
       }
 
-      if (note->end < cur_time && window_end < cur_time)
+      if (note->end < cur_time && window_end < cur_time && note->state != UserPlayable)
          m_notes.erase(note);
 
    }

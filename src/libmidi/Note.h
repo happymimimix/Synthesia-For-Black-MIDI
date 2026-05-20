@@ -31,7 +31,8 @@ struct GenericNote
       if (lhs.end < rhs.end) return true;
       if (lhs.end > rhs.end) return false;
 
-/*    // Don't need this anymore cus we have MULTISET baby!
+/*
+      // Don't need this anymore cus we have MULTISET baby!
       if (lhs.note_id < rhs.note_id) return true;
       if (lhs.note_id > rhs.note_id) return false;
 */
@@ -60,10 +61,8 @@ struct GenericNote
 // independent of tempo or playback speed.  TranslatedNote contains
 // the exact (translated) microsecond that notes start and stop on
 // based on a given playback speed, after dereferencing tempo changes.
-typedef GenericNote<unsigned long> Note;
 typedef GenericNote<microseconds_t> TranslatedNote;
 
-typedef std::multiset<Note, Note> NoteSet;
 typedef std::multiset<TranslatedNote, TranslatedNote> TranslatedNoteSet;
 
 #endif

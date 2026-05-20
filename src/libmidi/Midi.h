@@ -49,10 +49,6 @@ public:
    // This will report when the lead-out period is complete.
    bool IsSongOver() const;
 
-   unsigned int AggregateEventsRemain() const;
-   unsigned int AggregateEventCount() const;
-
-   unsigned int AggregateNotesRemain() const;
    unsigned int AggregateNoteCount() const;
 
    // These contain the microsecond positions of every beat line and
@@ -60,6 +56,8 @@ public:
    // on beat 1 of each measure; beat lines land on every other beat.
    const std::vector<microseconds_t> &BeatLines() const { return m_beat_lines; }
    const std::vector<microseconds_t> &BarLines() const { return m_bar_lines; }
+
+   microseconds_t(Midi:: *GetPtrToGetEventPulseInMicroseconds() const)(unsigned long, unsigned short, size_t&) const { return &Midi::GetEventPulseInMicroseconds; }
 
 private:
    const static unsigned long DefaultBPM = 120;
@@ -85,7 +83,6 @@ private:
    void BuildTempoTrack();
    void BuildTempoIndex(unsigned short pulses_per_quarter_note);
    void BuildBeatLines(unsigned short pulses_per_quarter_note);
-   void TranslateNotes(const NoteSet &notes, unsigned short pulses_per_quarter_note, unsigned short track_id);
 
    bool m_initialized;
 

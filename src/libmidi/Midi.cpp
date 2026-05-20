@@ -141,12 +141,8 @@ Midi Midi::ReadFromStream(istream &stream)
    // of events into microseconds.
    for (unsigned short i = 0; i < static_cast<unsigned short>(m.m_tracks.size()); ++i)
    {
-      m.m_tracks[i].BuildNoteSet();
-
-      m.TranslateNotes(m.m_tracks[i].Notes(), pulses_per_quarter_note, i);
-      // We're done with this track's NoteSet now
-      m.m_tracks[i].ClearNoteSet();
-
+      m.m_tracks[i].BuildNoteSet(&m.m_translated_notes, pulses_per_quarter_note, i, &m , m.GetPtrToGetEventPulseInMicroseconds());
+      
       // Translate event pulses into microseconds.
       // The pulses are already sorted, so we can use the hint
       // overload and breeze through the whole list.
@@ -454,25 +450,6 @@ void Midi::Reset(microseconds_t lead_in_microseconds, microseconds_t lead_out_mi
    for (MidiTrackList::iterator i = m_tracks.begin(); i != m_tracks.end(); ++i) { i->Reset(); }
 }
 
-void Midi::TranslateNotes(const NoteSet &notes, unsigned short pulses_per_quarter_note, unsigned short track_id)
-{
-   size_t tempo_hint = 0;
-   for (NoteSet::const_iterator i = notes.begin(); i != notes.end(); ++i)
-   {
-      TranslatedNote trans;
-      
-      trans.note_id = i->note_id;
-      trans.track_id = track_id;
-      trans.channel = i->channel;
-      trans.velocity = i->velocity;
-      trans.start = GetEventPulseInMicroseconds(i->start, pulses_per_quarter_note, tempo_hint);
-      size_t end_hint = tempo_hint; // Make a copy
-      trans.end = GetEventPulseInMicroseconds(i->end, pulses_per_quarter_note, end_hint);
-
-      m_translated_notes.insert(trans);
-   }
-}
-
 MidiEventListWithTrackId Midi::Update(microseconds_t delta_microseconds)
 {
    MidiEventListWithTrackId aggregated_events;
@@ -507,42 +484,6 @@ microseconds_t Midi::GetSongLengthInMicroseconds() const
 {
    if (!m_initialized) return 0;
    return m_microsecond_base_song_length - m_microsecond_dead_start_air;
-}
-
-unsigned int Midi::AggregateEventsRemain() const
-{
-   if (!m_initialized) return 0;
-
-   unsigned int aggregate = 0;
-   for (MidiTrackList::const_iterator i = m_tracks.begin(); i != m_tracks.end(); ++i)
-   {
-      aggregate += i->AggregateEventsRemain();
-   }
-   return aggregate;
-}
-
-unsigned int Midi::AggregateNotesRemain() const
-{
-   if (!m_initialized) return 0;
-
-   unsigned int aggregate = 0;
-   for (MidiTrackList::const_iterator i = m_tracks.begin(); i != m_tracks.end(); ++i)
-   {
-      aggregate += i->AggregateNotesRemain();
-   }
-   return aggregate;
-}
-
-unsigned int Midi::AggregateEventCount() const
-{
-   if (!m_initialized) return 0;
-
-   unsigned int aggregate = 0;
-   for (MidiTrackList::const_iterator i = m_tracks.begin(); i != m_tracks.end(); ++i)
-   {
-      aggregate += i->AggregateEventCount();
-   }
-   return aggregate;
 }
 
 unsigned int Midi::AggregateNoteCount() const

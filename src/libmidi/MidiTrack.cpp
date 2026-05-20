@@ -107,10 +107,8 @@ struct NoteInfo
    unsigned long pulses;
 };
 
-void MidiTrack::BuildNoteSet()
+void MidiTrack::BuildNoteSet(TranslatedNoteSet* translated_notes, unsigned short pulses_per_quarter_note, unsigned short track_id, Midi* self, microseconds_t(Midi:: *PtrToGetEventPulseInMicroseconds)(unsigned long, unsigned short, size_t&) const)
 {
-   m_note_set.clear();
-
    // Keep a list of all the notes currently "on" (and the pulse that
    // it was started).  On a note_on event, we create an element.  On
    // a note_off event we check that an element exists, make a "Note",
@@ -120,6 +118,8 @@ void MidiTrack::BuildNoteSet()
    //
    // A note_on with velocity 0 is a note_off
    array<queue<NoteInfo>, 0x100> m_active_notes;
+   size_t tempo_hint = 0;
+   m_note_count = 0;
 
    for (size_t i = 0; i < m_events.size(); ++i)
    {
@@ -127,26 +127,26 @@ void MidiTrack::BuildNoteSet()
       if (ev.Type() != MidiEventType_NoteOn && ev.Type() != MidiEventType_NoteOff) continue;
 
       bool on = (ev.Type() == MidiEventType_NoteOn && ev.NoteVelocity() > 0);
-      NoteId id = ev.NoteNumber();
 
-      // Close off the last event if there was one
-      if (!on && !m_active_notes[id].empty())
+      // Close off the last event if there was one.
+      if (!on && !m_active_notes[ev.NoteNumber()].empty())
       {
-         NoteInfo &find_ret = m_active_notes[id].front();
-         Note n;
-         n.start = find_ret.pulses;
-         n.end = m_event_pulses[i];
-         n.note_id = id;
-         n.channel = find_ret.channel;
-         n.velocity = find_ret.velocity;
+         NoteInfo &find_ret = m_active_notes[ev.NoteNumber()].front();
+         TranslatedNote trans = {};
 
-         // NOTE: This must be set at the next level up.  The track
-         // itself has no idea what its index is.
-         n.track_id = 0;
+         trans.note_id = ev.NoteNumber();
+         trans.track_id = track_id;
+         trans.channel = find_ret.channel;
+         trans.velocity = find_ret.velocity;
+         trans.start = (self->*PtrToGetEventPulseInMicroseconds)(find_ret.pulses, pulses_per_quarter_note, tempo_hint);
+         size_t end_hint = tempo_hint; // Make a copy
+         trans.end = (self->*PtrToGetEventPulseInMicroseconds)(m_event_pulses[i], pulses_per_quarter_note, end_hint);
 
          // Add a note and remove this NoteId from the active list
-         m_note_set.insert(n);
-         m_active_notes[id].pop();
+         translated_notes->insert(trans);
+         m_active_notes[ev.NoteNumber()].pop();
+
+         m_note_count++;
       } else {
       // Add a new active event
       NoteInfo info;
@@ -154,7 +154,7 @@ void MidiTrack::BuildNoteSet()
       info.velocity = ev.NoteVelocity();
       info.pulses = m_event_pulses[i];
 
-      m_active_notes[id].push(info);
+      m_active_notes[ev.NoteNumber()].push(info);
       }
    }
 
@@ -168,8 +168,6 @@ void MidiTrack::BuildNoteSet()
       // promiscuous MIDI files.  As-is, a note just won't be
       // inserted if it isn't closed properly.
    }
-
-   m_note_count = static_cast<unsigned int>(m_note_set.size());
 }
 
 void MidiTrack::DiscoverInstrument()
@@ -233,8 +231,6 @@ void MidiTrack::Reset()
 {
    m_running_microseconds = 0;
    m_last_event = -1;
-
-   m_notes_remaining = m_note_count;
 }
 
 MidiEventList MidiTrack::Update(microseconds_t delta_microseconds)
@@ -248,9 +244,6 @@ MidiEventList MidiTrack::Update(microseconds_t delta_microseconds)
       {
          evs.push_back(m_events[i]);
          m_last_event = static_cast<long long>(i);
-
-         if (m_events[i].Type() == MidiEventType_NoteOn &&
-            m_events[i].NoteVelocity() > 0) m_notes_remaining--;
       }
       else break;
    }

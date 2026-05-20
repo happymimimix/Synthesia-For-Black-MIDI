@@ -12,12 +12,14 @@
 #include "MidiEvent.h"
 #include "MidiUtil.h"
 
+class Midi;
 class MidiEvent;
 
 typedef std::vector<MidiEvent> MidiEventList;
 typedef std::vector<unsigned long> MidiEventPulsesList;
 typedef std::vector<microseconds_t> MidiEventMicrosecondList;
 
+#pragma pack(push, 1)
 class MidiTrack
 {
 public:
@@ -36,8 +38,6 @@ public:
 
    const std::wstring InstrumentName() const { return InstrumentNames[m_instrument_id]; }
 
-   const NoteSet &Notes() const { return m_note_set; }
-
    // Reports whether this track contains any Note-On MIDI events
    // (vs. just being an information track with a title or copyright)
    bool hasNotes() const { return (m_note_count > 0); }
@@ -45,16 +45,11 @@ public:
    void Reset();
    MidiEventList Update(microseconds_t delta_microseconds);
 
-   unsigned int AggregateEventsRemain() const { return static_cast<unsigned int>(m_events.size() - (m_last_event + 1)); }
-   unsigned int AggregateEventCount() const { return static_cast<unsigned int>(m_events.size()); }
-
-   unsigned int AggregateNotesRemain() const { return m_notes_remaining; }
    unsigned int AggregateNoteCount() const { return m_note_count; }
 
-   void ClearNoteSet() { m_note_set.clear(); }
    void ClearEventPulses() { MidiEventPulsesList().swap(m_event_pulses); }
 
-   void BuildNoteSet();
+   void BuildNoteSet(TranslatedNoteSet* translated_notes, unsigned short pulses_per_quarter_note, unsigned short track_id, Midi* self, microseconds_t (Midi:: *PtrToGetEventPulseInMicroseconds)(unsigned long, unsigned short, size_t&) const);
 
 private:
    MidiTrack() : m_instrument_id(0), m_note_count(0) { Reset(); }
@@ -65,15 +60,13 @@ private:
    MidiEventPulsesList m_event_pulses;
    MidiEventMicrosecondList m_event_usecs;
 
-   NoteSet m_note_set;
    unsigned int m_note_count;
 
    unsigned char m_instrument_id;
 
    microseconds_t m_running_microseconds;
    long long m_last_event;
-
-   unsigned int m_notes_remaining;
 };
+#pragma pack(pop)
 
 #endif

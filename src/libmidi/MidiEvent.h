@@ -11,6 +11,7 @@
 #include "Note.h"
 #include "MidiUtil.h"
 
+#pragma pack(push, 1)
 struct MidiEventSimple
 {
    MidiEventSimple() : status(0), byte1(0), byte2(0) { }
@@ -102,6 +103,6 @@ private:
    unsigned char m_time_sig_numerator;
    unsigned char m_time_sig_denominator;
 };
-
+#pragma pack(pop)
 
 #endif __MIDI_EVENT_H
