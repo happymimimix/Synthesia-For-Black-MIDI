@@ -92,12 +92,11 @@ private:
    void ReadStandard(std::istream &stream);
 
    unsigned char m_status;
+   unsigned char m_meta_type;
    unsigned char m_data1;
    unsigned char m_data2;
+
    unsigned long m_delta_pulses;
-
-   unsigned char m_meta_type;
-
    unsigned long m_tempo_uspqn;
 
    unsigned char m_time_sig_numerator;
