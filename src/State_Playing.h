@@ -19,7 +19,7 @@ class MidiCommOut;
 class MidiCommIn;
 
 typedef unsigned char ActiveNoteChan;
-typedef std::multiset<ActiveNoteChan> ActiveNoteSetItem;
+typedef std::list<ActiveNoteChan> ActiveNoteSetItem;
 typedef std::array<ActiveNoteSetItem, 0x100> ActiveNoteSet;
 typedef std::array<microseconds_t, 0x100> KeyReleaseTime;
 

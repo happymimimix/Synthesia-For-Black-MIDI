@@ -201,9 +201,25 @@ void PlayingState::Listen()
 {
    if (!m_state.midi_in) return;
 
+   microseconds_t cur_time = m_state.midi->GetSongPositionInMicroseconds();
+   std::array<std::list<TranslatedNoteSet::iterator>, 0x100> note_lookup = {};
+
+   TranslatedNote search_key = {};
+   search_key.start = cur_time - (KeyboardDisplay::NoteWindowLength / 2);
+   for (TranslatedNoteSet::iterator i = m_notes.lower_bound(search_key); i != m_notes.end(); ++i)
+   {
+      // As soon as we start processing notes that couldn't possibly
+      // have been played yet, we're done.
+      if (i->start - (KeyboardDisplay::NoteWindowLength / 2) > cur_time) break;
+
+      if (i->state == UserPlayable)
+      {
+         note_lookup[i->note_id].push_back(i);
+      }
+   }
+
    while (m_state.midi_in->KeepReading())
    {
-      microseconds_t cur_time = m_state.midi->GetSongPositionInMicroseconds();
       MidiEvent ev = m_state.midi_in->Read();
 
       // We're only interested in NoteOn and NoteOff
@@ -218,20 +234,25 @@ void PlayingState::Listen()
       if (ev.Type() == MidiEventType_NoteOff || ev.NoteVelocity() == 0)
       {
          if (!m_active_notes[ev.NoteNumber()].empty()){
-            ActiveNoteSetItem::iterator matched = m_active_notes[ev.NoteNumber()].find(ev.Channel());
-
-            if (matched != m_active_notes[ev.NoteNumber()].end()) {
-               // Try to find one that match the channel exactly first.
-               if (m_state.midi_out) m_state.midi_out->Write(ev);
-               m_active_notes[ev.NoteNumber()].erase(matched);
-            } else {
-               // If not found, pick the first item and override the channel.
-               matched = m_active_notes[ev.NoteNumber()].begin();
-               ev.SetChannel(*matched);
-               if (m_state.midi_out) m_state.midi_out->Write(ev);
-               m_active_notes[ev.NoteNumber()].erase(matched);
+            bool Found = false;
+            for (ActiveNoteSetItem::const_iterator it = m_active_notes[ev.NoteNumber()].end(); it != m_active_notes[ev.NoteNumber()].begin();)
+            {
+               it--;
+               if (*it == ev.Channel())
+               {
+                  // Try to find one that match the channel exactly first.
+                  if (m_state.midi_out) m_state.midi_out->Write(ev);
+                  m_active_notes[ev.NoteNumber()].erase(it);
+                  Found = true;
+                  break;
+               }
             }
-
+            if (!Found) {
+               // If not found, pick the last item and override the channel.
+               ev.SetChannel(m_active_notes[ev.NoteNumber()].back());
+               if (m_state.midi_out) m_state.midi_out->Write(ev);
+               m_active_notes[ev.NoteNumber()].pop_back();
+            }
             if (m_active_notes[ev.NoteNumber()].empty()) m_release_time[ev.NoteNumber()] = cur_time;
          }
          else {
@@ -243,24 +264,16 @@ void PlayingState::Listen()
       } else {
 
       TranslatedNoteSet::iterator closest_match = m_notes.end();
-      TranslatedNote search_key = {};
-      search_key.start = cur_time - (KeyboardDisplay::NoteWindowLength / 2);
-      for (TranslatedNoteSet::iterator i = m_notes.lower_bound(search_key); i != m_notes.end(); ++i)
+      std::list<TranslatedNoteSet::iterator>::iterator closest_match_lookup_item = note_lookup[ev.NoteNumber()].end();
+      for (std::list<TranslatedNoteSet::iterator>::iterator i = note_lookup[ev.NoteNumber()].begin(); i != note_lookup[ev.NoteNumber()].end(); ++i)
       {
-         // As soon as we start processing notes that couldn't possibly
-         // have been played yet, we're done.
-         if (i->start - (KeyboardDisplay::NoteWindowLength / 2) > cur_time) break;
-
-         if (i->note_id == ev.NoteNumber() && i->state == UserPlayable)
-         {
-            // We've found a match!
-            if (closest_match == m_notes.end()) closest_match = i;
-            if (i->channel == ev.Channel()){
-               // We've found a SUPER CLOSE match!
-               closest_match = i;
-               // There's no way we'll ever find an EVEN CLOSER match than this one so let's BREAK.
-               break;
-            }
+         // We've found a match!
+         if (closest_match == m_notes.end()) closest_match = *i;
+         if ((*i)->channel == ev.Channel()){
+            // We've found a SUPER CLOSE match!
+            closest_match = *i;
+            // There's no way we'll ever find an EVEN CLOSER match than this one so let's BREAK.
+            break;
          }
       }
 
@@ -272,7 +285,7 @@ void PlayingState::Listen()
 
          // "Open" this note so we can catch the close later and turn off
          // the note.
-         m_active_notes[closest_match->note_id].insert(closest_match->channel);
+         m_active_notes[closest_match->note_id].push_back(closest_match->channel);
 
          // Play it
          ev.SetChannel(closest_match->channel);
@@ -299,10 +312,11 @@ void PlayingState::Listen()
          m_state.stats.longest_combo = max(m_current_combo, m_state.stats.longest_combo);
 
          const_cast<TranslatedNote&>(*closest_match).state = UserHit;
+         note_lookup[ev.NoteNumber()].erase(closest_match_lookup_item);
       }
       else
       {
-         m_active_notes[ev.NoteNumber()].insert(ev.Channel());
+         m_active_notes[ev.NoteNumber()].push_back(ev.Channel());
          if (m_state.midi_out) m_state.midi_out->Write(ev);
          m_state.stats.stray_notes++;
       }
@@ -312,6 +326,8 @@ void PlayingState::Listen()
 
       } }
    }
+
+   for (std::list<TranslatedNoteSet::iterator> bucket : note_lookup) bucket.clear();
 }
 
 void PlayingState::Update()

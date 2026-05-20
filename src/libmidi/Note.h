@@ -19,6 +19,7 @@ enum NoteState : unsigned char
    UserMissed
 };
 
+#pragma pack(push, 1)
 template <class T>
 struct GenericNote
 {
@@ -30,8 +31,10 @@ struct GenericNote
       if (lhs.end < rhs.end) return true;
       if (lhs.end > rhs.end) return false;
 
+/*    // Don't need this anymore cus we have MULTISET baby!
       if (lhs.note_id < rhs.note_id) return true;
       if (lhs.note_id > rhs.note_id) return false;
+*/
 
       if (lhs.track_id < rhs.track_id) return true;
       if (lhs.track_id > rhs.track_id) return false;
@@ -51,6 +54,7 @@ struct GenericNote
 
    NoteState state;
 };
+#pragma pack(pop)
 
 // Note keeps the internal pulses found in the MIDI file which are
 // independent of tempo or playback speed.  TranslatedNote contains
@@ -59,7 +63,7 @@ struct GenericNote
 typedef GenericNote<unsigned long> Note;
 typedef GenericNote<microseconds_t> TranslatedNote;
 
-typedef std::set<Note, Note> NoteSet;
-typedef std::set<TranslatedNote, TranslatedNote> TranslatedNoteSet;
+typedef std::multiset<Note, Note> NoteSet;
+typedef std::multiset<TranslatedNote, TranslatedNote> TranslatedNoteSet;
 
 #endif
