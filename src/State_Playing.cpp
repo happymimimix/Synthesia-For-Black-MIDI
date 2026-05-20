@@ -268,10 +268,14 @@ void PlayingState::Listen()
       for (std::list<TranslatedNoteSet::iterator>::iterator i = note_lookup[ev.NoteNumber()].begin(); i != note_lookup[ev.NoteNumber()].end(); ++i)
       {
          // We've found a match!
-         if (closest_match == m_notes.end()) closest_match = *i;
+         if (closest_match == m_notes.end()) {
+            closest_match = *i;
+            closest_match_lookup_item = i;
+         }
          if ((*i)->channel == ev.Channel()){
             // We've found a SUPER CLOSE match!
             closest_match = *i;
+            closest_match_lookup_item = i;
             // There's no way we'll ever find an EVEN CLOSER match than this one so let's BREAK.
             break;
          }
