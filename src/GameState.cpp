@@ -196,7 +196,6 @@ void GameStateManager::Update(bool skip_this_update)
    m_inside_update = true;
 
    m_current_state->m_last_delta_milliseconds = delta;
-   m_current_state->m_state_milliseconds += delta;
    m_current_state->Update();
 
    m_inside_update = false;

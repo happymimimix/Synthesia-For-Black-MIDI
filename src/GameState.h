@@ -77,7 +77,7 @@ public:
    // on the protected functions (GetStateWidth,
    // GetStateMilliseconds, etc) here.  Wait until
    // Init() to do that.
-   GameState() : m_manager(0), m_state_milliseconds(0), m_last_delta_milliseconds(0) { }
+   GameState() : m_manager(0), m_last_delta_milliseconds(0) { }
    virtual ~GameState() { }
 
 protected:
@@ -93,9 +93,6 @@ protected:
    // GetStateWidth()) and [0, GetStateHeight())
    virtual void Draw(Renderer &renderer) const = 0;
 
-   // How long has this state been running
-   unsigned long GetStateMilliseconds() const { return m_state_milliseconds; }
-   
    // How much time elapsed since the last update
    unsigned long GetDeltaMilliseconds() const { return m_last_delta_milliseconds; }
 
@@ -128,11 +125,9 @@ private:
 
    void UpdateStateMicroseconds(unsigned long delta_ms)
    {
-      m_state_milliseconds += delta_ms;
       m_last_delta_milliseconds = delta_ms;
    }
 
-   unsigned long m_state_milliseconds;
    unsigned long m_last_delta_milliseconds;
 
    friend class GameStateManager;
