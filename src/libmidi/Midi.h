@@ -66,7 +66,7 @@ private:
 
    static microseconds_t ConvertPulsesToMicroseconds(unsigned long pulses, microseconds_t tempo, unsigned short pulses_per_quarter_note);
 
-   Midi(): m_initialized(false), m_microsecond_dead_start_air(0), m_tempo_ppqn(0) { Reset(0, 0); }
+   Midi(): m_initialized(false), m_microsecond_dead_start_air(0) { Reset(0, 0); }
    
    // The tempo index lets us do this in O(log n) instead of the old
    // linear scan.
@@ -92,7 +92,6 @@ private:
    std::vector<unsigned long>  m_tempo_pulse_marks;
    std::vector<microseconds_t> m_tempo_usec_marks;
    std::vector<microseconds_t> m_tempo_values;
-   unsigned short m_tempo_ppqn;
 
    // Time signature data collected during BuildTempoTrack.
    std::vector<unsigned long>  m_timesig_pulse_marks;

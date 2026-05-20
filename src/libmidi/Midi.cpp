@@ -305,7 +305,6 @@ microseconds_t Midi::ConvertPulsesToMicroseconds(unsigned long pulses, microseco
 // (We just store the running wall-clock time at each tempo change.)
 void Midi::BuildTempoIndex(unsigned short pulses_per_quarter_note)
 {
-   m_tempo_ppqn = pulses_per_quarter_note;
    m_tempo_pulse_marks.clear();
    m_tempo_usec_marks.clear();
    m_tempo_values.clear();
