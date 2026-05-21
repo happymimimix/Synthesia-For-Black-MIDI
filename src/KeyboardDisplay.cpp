@@ -26,7 +26,7 @@ KeyboardDisplay::KeyboardDisplay(KeyboardSize size, int pixelWidth, int pixelHei
 
 
 void KeyboardDisplay::Draw(Renderer &renderer, const Tga *key_tex[4], const Tga *note_tex[4], int x, int y,
-                           const TranslatedNoteSetCopy &notes, microseconds_t show_duration, microseconds_t current_time,
+                           const NoteSetReference &notes, microseconds_t show_duration, microseconds_t current_time,
                            const std::vector<Track::Properties> &track_properties,
                            const std::vector<microseconds_t> &beat_lines, const std::vector<microseconds_t> &bar_lines)
 {
@@ -420,7 +420,7 @@ void KeyboardDisplay::DrawNote(Renderer &renderer, const Tga *tex, const NoteTex
 
 void KeyboardDisplay::DrawNotePass(Renderer &renderer, const Tga *tex_white, const Tga *tex_black, int white_width,
    int key_space, int black_width, int black_offset, int x_offset, int y, int y_offset, int y_roll_under, 
-   const TranslatedNoteSetCopy &notes, microseconds_t show_duration, microseconds_t current_time,
+   const NoteSetReference &notes, microseconds_t show_duration, microseconds_t current_time,
    const std::vector<Track::Properties> &track_properties) const
 {
    // Shiny music domain knowledge
@@ -448,7 +448,7 @@ void KeyboardDisplay::DrawNotePass(Renderer &renderer, const Tga *tex_white, con
    bool drawing_black = false;
    for (int toggle = 0; toggle < 2; ++toggle)
    {
-      for (TranslatedNoteSetCopy::const_iterator i = notes.begin(); i != notes.end(); ++i)
+      for (NoteSetReference::const_iterator i = notes.begin(); i != notes.end(); ++i)
       {
           TranslatedNoteSet::iterator note = *i;
          // This list is sorted by note start time.  The moment we encounter

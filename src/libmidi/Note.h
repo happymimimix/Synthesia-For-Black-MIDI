@@ -65,6 +65,6 @@ struct GenericNote
 typedef GenericNote<microseconds_t> TranslatedNote;
 
 typedef std::multiset<TranslatedNote, TranslatedNote> TranslatedNoteSet;
-typedef std::list<TranslatedNoteSet::iterator> TranslatedNoteSetCopy;
+typedef std::list<TranslatedNoteSet::const_iterator> NoteSetReference;
 
 #endif

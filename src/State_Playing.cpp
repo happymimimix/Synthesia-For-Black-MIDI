@@ -31,7 +31,7 @@ void PlayingState::SetupNoteState()
 {
    // The state field doesn't affect ordering, so we can just change it directly instead of rebuilding the set.
 
-   for (TranslatedNoteSetCopy::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
+   for (NoteSetReference::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
    {
       TranslatedNote &n = const_cast<TranslatedNote&>(**i);
       n.state = AutoPlayed;
@@ -369,9 +369,9 @@ void PlayingState::Update()
    microseconds_t cur_time = m_state.midi->GetSongPositionInMicroseconds();
 
    // Delete notes that are finished playing (and are no longer available to hit)
-   for (TranslatedNoteSetCopy::iterator i = m_notes.begin(); i != m_notes.end();)
+   for (NoteSetReference::iterator i = m_notes.begin(); i != m_notes.end();)
    {
-      TranslatedNoteSetCopy::iterator cached = i++;
+      NoteSetReference::iterator cached = i++;
       TranslatedNoteSet::iterator note = *cached;
 
       const microseconds_t window_end = note->start + (KeyboardDisplay::NoteWindowLength / 2);

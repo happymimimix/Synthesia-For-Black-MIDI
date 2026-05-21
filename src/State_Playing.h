@@ -55,9 +55,9 @@ private:
 
    KeyboardDisplay *m_keyboard;
    microseconds_t m_show_duration;
-   TranslatedNoteSetCopy m_notes;
+   NoteSetReference m_notes;
    const TranslatedNoteSet* m_ptr_notes;
-   TranslatedNoteSetCopy::iterator m_next_note_to_listen;
+   NoteSetReference::iterator m_next_note_to_listen;
    NoteLookupTable m_note_lookup;
    LookupTableMap m_note_lookup_map;
 
