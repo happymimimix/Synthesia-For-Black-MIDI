@@ -277,17 +277,24 @@ void PlayingState::Listen()
       SingleNoteLookupTable::iterator closest_match_lookup_item = m_note_lookup[ev.NoteNumber()].end();
       for (SingleNoteLookupTable::iterator i = m_note_lookup[ev.NoteNumber()].begin(); i != m_note_lookup[ev.NoteNumber()].end(); ++i)
       {
-         // We've found a match!
-         if (closest_match == m_ptr_notes->end()) {
-            closest_match = *i;
-            closest_match_lookup_item = i;
-         }
-         if ((*i)->channel == ev.Channel()){
-            // We've found a SUPER CLOSE match!
-            closest_match = *i;
-            closest_match_lookup_item = i;
-            // There's no way we'll ever find an EVEN CLOSER match than this one so let's BREAK.
-            break;
+         const microseconds_t window_start = (*i)->start - (KeyboardDisplay::NoteWindowLength / 2);
+         const microseconds_t window_end = (*i)->start + (KeyboardDisplay::NoteWindowLength / 2);
+
+         if (window_start <= cur_time && window_end >= cur_time) {
+            if ((*i)->state != UserPlayable) throw GameStateError("PlayingState: Lookup map has been corrupted!");
+
+            // We've found a match!
+            if (closest_match == m_ptr_notes->end()) {
+               closest_match = *i;
+               closest_match_lookup_item = i;
+            }
+            if ((*i)->channel == ev.Channel()){
+               // We've found a SUPER CLOSE match!
+               closest_match = *i;
+               closest_match_lookup_item = i;
+               // There's no way we'll ever find an EVEN CLOSER match than this one so let's BREAK.
+               break;
+            }
          }
       }
 
@@ -400,6 +407,7 @@ void PlayingState::Update()
                m_note_lookup[note->note_id].erase(found->second);
                m_note_lookup_map.erase(found);
             }
+            else throw GameStateError("PlayingState: Lookup map has been corrupted!");
          }
 
          const_cast<TranslatedNote&>(*note).state = UserMissed;
