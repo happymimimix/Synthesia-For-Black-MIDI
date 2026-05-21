@@ -146,11 +146,10 @@ void PlayingState::Play(microseconds_t delta_microseconds)
 {
    MidiEventListWithTrackId evs = m_state.midi->Update(delta_microseconds);
 
-   const size_t length = evs.size();
-   for (size_t i = 0; i < length; ++i)
+   for (const auto& evit : evs)
    {
-      const unsigned short &track_id = evs[i].first;
-      const MidiEvent &ev = evs[i].second;
+      const unsigned short &track_id = evit.first;
+      const MidiEvent &ev = evit.second;
 
       // Draw refers to the keys lighting up (automatically) -- not necessarily
       // the falling notes.  The KeyboardDisplay object contains its own logic

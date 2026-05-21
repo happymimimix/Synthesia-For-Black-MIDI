@@ -465,14 +465,11 @@ MidiEventListWithTrackId Midi::Update(microseconds_t delta_microseconds)
    if (m_microsecond_song_position < 0) return aggregated_events;
    if (delta_microseconds > m_microsecond_song_position) delta_microseconds = m_microsecond_song_position;
 
-   for (unsigned short i = 0; i < static_cast<unsigned short>(m_tracks.size()); ++i)
+   for (unsigned short trk = 0; trk < static_cast<unsigned short>(m_tracks.size()); ++trk)
    {
-      MidiEventList track_events = m_tracks[i].Update(delta_microseconds);
-
-      const size_t event_count = track_events.size();
-      for (size_t j = 0; j < event_count; ++j)
+      for (const MidiEvent& evt : m_tracks[trk].Update(delta_microseconds))
       {
-         aggregated_events.insert(aggregated_events.end(), std::pair<unsigned short, MidiEvent>(i, track_events[j]));
+         aggregated_events.insert(aggregated_events.end(), make_pair(trk, evt));
       }
    }
 
