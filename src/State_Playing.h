@@ -24,6 +24,9 @@ struct ActiveNoteChan {
 };
 typedef std::list<ActiveNoteChan> ActiveNoteSetItem;
 typedef std::array<ActiveNoteSetItem, 0x100> ActiveNoteSet;
+typedef std::list<TranslatedNoteSet::const_iterator> SingleNoteLookupTable;
+typedef std::array<SingleNoteLookupTable, 0x100> NoteLookupTable;
+typedef std::unordered_map<const TranslatedNote*, SingleNoteLookupTable::const_iterator> LookupTableMap;
 typedef std::array<microseconds_t, 0x100> KeyReleaseTime;
 
 class PlayingState : public GameState
@@ -52,7 +55,11 @@ private:
 
    KeyboardDisplay *m_keyboard;
    microseconds_t m_show_duration;
-   TranslatedNoteSet m_notes;
+   TranslatedNoteSetCopy m_notes;
+   const TranslatedNoteSet* m_ptr_notes;
+   TranslatedNoteSetCopy::iterator m_next_note_to_listen;
+   NoteLookupTable m_note_lookup;
+   LookupTableMap m_note_lookup_map;
 
    bool m_any_you_play_tracks;
    size_t m_look_ahead_you_play_note_count;

@@ -30,7 +30,7 @@ public:
 
    const std::vector<MidiTrack> &Tracks() const { return m_tracks; }
 
-   const TranslatedNoteSet &Notes() const { return m_translated_notes; }
+   const TranslatedNoteSet *Notes() const { return &m_translated_notes; }
 
    MidiEventListWithTrackId Update(microseconds_t delta_microseconds);
 

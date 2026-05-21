@@ -6,6 +6,7 @@
 #define __MIDI_NOTE_H
 
 #include <set>
+#include <list>
 #include "MidiTypes.h"
 
 // Range of all 128 (or probably 256) MIDI notes possible
@@ -64,5 +65,6 @@ struct GenericNote
 typedef GenericNote<microseconds_t> TranslatedNote;
 
 typedef std::multiset<TranslatedNote, TranslatedNote> TranslatedNoteSet;
+typedef std::list<TranslatedNoteSet::iterator> TranslatedNoteSetCopy;
 
 #endif

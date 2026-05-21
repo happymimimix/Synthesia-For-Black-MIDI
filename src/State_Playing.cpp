@@ -31,9 +31,9 @@ void PlayingState::SetupNoteState()
 {
    // The state field doesn't affect ordering, so we can just change it directly instead of rebuilding the set.
 
-   for (TranslatedNoteSet::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
+   for (TranslatedNoteSetCopy::iterator i = m_notes.begin(); i != m_notes.end(); ++i)
    {
-      TranslatedNote &n = const_cast<TranslatedNote&>(*i);
+      TranslatedNote &n = const_cast<TranslatedNote&>(**i);
       n.state = AutoPlayed;
       if (m_state.track_properties[n.track_id].mode == Track::ModeYouPlay) n.state = UserPlayable;
    }
@@ -53,7 +53,19 @@ void PlayingState::ResetSong()
 
    m_state.midi->Reset(LeadIn, LeadOut);
 
-   m_notes = m_state.midi->Notes();
+   // Get a pointer to m_translated_notes
+   m_ptr_notes = m_state.midi->Notes();
+
+   // Build the pointer linked list (much more memory efficient than copying the entire set)
+   m_notes.clear();
+   for (TranslatedNoteSet::const_iterator i = m_ptr_notes->begin(); i != m_ptr_notes->end(); ++i) m_notes.push_back(i);
+
+   // Initialize the listen lookup table
+   m_next_note_to_listen = m_notes.begin();
+   for (SingleNoteLookupTable& bucket : m_note_lookup) bucket.clear();
+   m_note_lookup_map.clear();
+
+   // Initialize the note state flag correctly
    SetupNoteState();
 
    m_state.stats = SongStatistics();
@@ -201,19 +213,17 @@ void PlayingState::Listen()
    if (!m_state.midi_in) return;
 
    microseconds_t cur_time = m_state.midi->GetSongPositionInMicroseconds();
-   std::array<std::list<TranslatedNoteSet::iterator>, 0x100> note_lookup = {};
 
-   TranslatedNote search_key = {};
-   search_key.start = cur_time - (KeyboardDisplay::NoteWindowLength / 2);
-   for (TranslatedNoteSet::iterator i = m_notes.lower_bound(search_key); i != m_notes.end(); ++i)
+   for (; m_next_note_to_listen != m_notes.end(); ++m_next_note_to_listen)
    {
       // As soon as we start processing notes that couldn't possibly
       // have been played yet, we're done.
-      if (i->start - (KeyboardDisplay::NoteWindowLength / 2) > cur_time) break;
+      if ((*m_next_note_to_listen)->start - (KeyboardDisplay::NoteWindowLength / 2) > cur_time) break;
 
-      if (i->state == UserPlayable)
+      if ((*m_next_note_to_listen)->state == UserPlayable)
       {
-         note_lookup[i->note_id].push_back(i);
+         m_note_lookup[(*m_next_note_to_listen)->note_id].push_back(*m_next_note_to_listen);
+         m_note_lookup_map[&**m_next_note_to_listen] = prev(m_note_lookup[(*m_next_note_to_listen)->note_id].end());
       }
    }
 
@@ -263,12 +273,12 @@ void PlayingState::Listen()
          continue;
       } else {
 
-      TranslatedNoteSet::iterator closest_match = m_notes.end();
-      std::list<TranslatedNoteSet::iterator>::iterator closest_match_lookup_item = note_lookup[ev.NoteNumber()].end();
-      for (std::list<TranslatedNoteSet::iterator>::iterator i = note_lookup[ev.NoteNumber()].begin(); i != note_lookup[ev.NoteNumber()].end(); ++i)
+      TranslatedNoteSet::iterator closest_match = m_ptr_notes->end();
+      SingleNoteLookupTable::iterator closest_match_lookup_item = m_note_lookup[ev.NoteNumber()].end();
+      for (SingleNoteLookupTable::iterator i = m_note_lookup[ev.NoteNumber()].begin(); i != m_note_lookup[ev.NoteNumber()].end(); ++i)
       {
          // We've found a match!
-         if (closest_match == m_notes.end()) {
+         if (closest_match == m_ptr_notes->end()) {
             closest_match = *i;
             closest_match_lookup_item = i;
          }
@@ -283,7 +293,7 @@ void PlayingState::Listen()
 
       Track::TrackColor note_color = Track::FlatGray;
 
-      if (closest_match != m_notes.end())
+      if (closest_match != m_ptr_notes->end())
       {
          note_color = m_state.track_properties[closest_match->track_id].color;
 
@@ -316,7 +326,8 @@ void PlayingState::Listen()
          m_state.stats.longest_combo = max(m_current_combo, m_state.stats.longest_combo);
 
          const_cast<TranslatedNote&>(*closest_match).state = UserHit;
-         note_lookup[ev.NoteNumber()].erase(closest_match_lookup_item);
+         m_note_lookup[ev.NoteNumber()].erase(closest_match_lookup_item);
+         m_note_lookup_map.erase(&*closest_match);
       }
       else
       {
@@ -330,8 +341,6 @@ void PlayingState::Listen()
 
       } }
    }
-
-   for (std::list<TranslatedNoteSet::iterator> bucket : note_lookup) bucket.clear();
 }
 
 void PlayingState::Update()
@@ -360,10 +369,10 @@ void PlayingState::Update()
    microseconds_t cur_time = m_state.midi->GetSongPositionInMicroseconds();
 
    // Delete notes that are finished playing (and are no longer available to hit)
-   TranslatedNoteSet::iterator i = m_notes.begin();
-   while (i != m_notes.end())
+   for (TranslatedNoteSetCopy::iterator i = m_notes.begin(); i != m_notes.end();)
    {
-      TranslatedNoteSet::iterator note = i++;
+      TranslatedNoteSetCopy::iterator cached = i++;
+      TranslatedNoteSet::iterator note = *cached;
 
       const microseconds_t window_end = note->start + (KeyboardDisplay::NoteWindowLength / 2);
       const microseconds_t window_finish = note->end - (KeyboardDisplay::NoteWindowLength / 2);
@@ -384,6 +393,14 @@ void PlayingState::Update()
 
             m_state.stats.notes_user_actually_played--;
          }
+         else {
+            // Tell PlayingState::Listen() to not search for this note ever again.
+            LookupTableMap::iterator found = m_note_lookup_map.find(&*note);
+            if (found != m_note_lookup_map.end()) {
+               m_note_lookup[note->note_id].erase(found->second);
+               m_note_lookup_map.erase(found);
+            }
+         }
 
          const_cast<TranslatedNote&>(*note).state = UserMissed;
 
@@ -394,6 +411,7 @@ void PlayingState::Update()
          m_state.stats.speed_integral += m_state.song_speed;
       }
 
+      // This list is sorted by note start time. The moment we encounter a note after cur_time, we're done.
       if (note->start > cur_time) break;
       else if (!m_state.midi_in && note->state == UserPlayable) {
          // Let's assume all notes are perfect when there's no midi input device.
@@ -419,8 +437,11 @@ void PlayingState::Update()
          m_state.stats.total_notes_user_pressed++;
       }
 
-      if (note->end < cur_time && window_end < cur_time && note->state != UserPlayable)
-         m_notes.erase(note);
+      if (note->end < cur_time && window_end < cur_time && note->state != UserPlayable) {
+         if (cached == m_next_note_to_listen && m_next_note_to_listen != m_notes.end()) 
+            m_next_note_to_listen = next(cached);
+         m_notes.erase(cached);
+      }
 
    }
 

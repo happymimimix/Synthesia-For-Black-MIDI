@@ -26,7 +26,7 @@ KeyboardDisplay::KeyboardDisplay(KeyboardSize size, int pixelWidth, int pixelHei
 
 
 void KeyboardDisplay::Draw(Renderer &renderer, const Tga *key_tex[4], const Tga *note_tex[4], int x, int y,
-                           const TranslatedNoteSet &notes, microseconds_t show_duration, microseconds_t current_time,
+                           const TranslatedNoteSetCopy &notes, microseconds_t show_duration, microseconds_t current_time,
                            const std::vector<Track::Properties> &track_properties,
                            const std::vector<microseconds_t> &beat_lines, const std::vector<microseconds_t> &bar_lines)
 {
@@ -420,7 +420,7 @@ void KeyboardDisplay::DrawNote(Renderer &renderer, const Tga *tex, const NoteTex
 
 void KeyboardDisplay::DrawNotePass(Renderer &renderer, const Tga *tex_white, const Tga *tex_black, int white_width,
    int key_space, int black_width, int black_offset, int x_offset, int y, int y_offset, int y_roll_under, 
-   const TranslatedNoteSet &notes, microseconds_t show_duration, microseconds_t current_time,
+   const TranslatedNoteSetCopy &notes, microseconds_t show_duration, microseconds_t current_time,
    const std::vector<Track::Properties> &track_properties) const
 {
    // Shiny music domain knowledge
@@ -448,18 +448,19 @@ void KeyboardDisplay::DrawNotePass(Renderer &renderer, const Tga *tex_white, con
    bool drawing_black = false;
    for (int toggle = 0; toggle < 2; ++toggle)
    {
-      for (TranslatedNoteSet::const_iterator i = notes.begin(); i != notes.end(); ++i)
+      for (TranslatedNoteSetCopy::const_iterator i = notes.begin(); i != notes.end(); ++i)
       {
+          TranslatedNoteSet::iterator note = *i;
          // This list is sorted by note start time.  The moment we encounter
          // a note scrolled off the window, we're done drawing
-         if (i->start > current_time + show_duration) break;
+         if (note->start > current_time + show_duration) break;
 
-         const Track::Mode mode = track_properties[i->track_id].mode;
+         const Track::Mode mode = track_properties[note->track_id].mode;
          if (mode == Track::ModeNotPlayed) continue;
          if (mode == Track::ModePlayedButHidden) continue;
 
-         const int octave = (i->note_id / NotesPerOctave) - GetStartingOctave();
-         const int octave_base = i->note_id % NotesPerOctave;
+         const int octave = (note->note_id / NotesPerOctave) - GetStartingOctave();
+         const int octave_base = note->note_id % NotesPerOctave;
          const int stack_offset = NoteToWhiteNoteOffset[octave_base];
          const bool is_black = IsBlackNote[octave_base];
 
@@ -472,8 +473,8 @@ void KeyboardDisplay::DrawNotePass(Renderer &renderer, const Tga *tex_white, con
          const double scaling_factor = static_cast<double>(y_offset) / static_cast<double>(show_duration);
 
          const long long roll_under = static_cast<int>(y_roll_under / scaling_factor);
-         const long long adjusted_start = max(i->start - current_time, -roll_under);
-         const long long adjusted_end   = max(i->end   - current_time, 0LL);
+         const long long adjusted_start = max(note->start - current_time, -roll_under);
+         const long long adjusted_end   = max(note->end   - current_time, 0LL);
          if (adjusted_end < adjusted_start) continue;
 
          // Convert our times to pixel coordinates
@@ -491,15 +492,15 @@ void KeyboardDisplay::DrawNotePass(Renderer &renderer, const Tga *tex_white, con
          // Force a note to be a minimum height at all times
          // except when scrolling off underneath the keyboard and
          // coming in from the top of the screen.
-         const bool hitting_bottom = (adjusted_start + current_time != i->start);
-         const bool hitting_top    = (adjusted_end   + current_time != i->end);
+         const bool hitting_bottom = (adjusted_start + current_time != note->start);
+         const bool hitting_top    = (adjusted_end   + current_time != note->end);
          if (!hitting_bottom && !hitting_top)
          {
             while ( (height) < MinNoteHeight) height++;
          }
 
-         const Track::TrackColor color = track_properties[i->track_id].color;
-         const int &brush_id = (i->state == UserMissed ? Track::MissedNote : color);
+         const Track::TrackColor color = track_properties[note->track_id].color;
+         const int &brush_id = (note->state == UserMissed ? Track::MissedNote : color);
 
          DrawNote(renderer, (drawing_black ? tex_black : tex_white), (drawing_black ? BlackNoteDimensions : WhiteNoteDimensions), left, top, width, height, brush_id);
       }
