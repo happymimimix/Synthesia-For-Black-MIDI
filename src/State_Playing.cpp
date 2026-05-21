@@ -433,6 +433,8 @@ void PlayingState::Update()
          m_current_combo++;
          m_state.stats.longest_combo = max(m_current_combo, m_state.stats.longest_combo);
 
+         // We don't need to erase any entries from m_note_lookup_map here
+         // because the entire PlayingState::Listen() routine does not work at all in autoplay mode!
          const_cast<TranslatedNote&>(*note).state = UserHit;
          m_state.stats.total_notes_user_pressed++;
       }
