@@ -31,7 +31,7 @@ public:
    const MidiEventPulsesList *EventPulses() const { return &m_event_pulses; }
    const MidiEventMicrosecondList *EventUsecs() const { return &m_event_usecs; }
 
-   void SetEventUsecs(const MidiEventMicrosecondList &event_usecs) { m_event_usecs = event_usecs; }
+   MidiEventMicrosecondList *GetEventUsecsNonConst() { return &m_event_usecs; }
 
    const std::wstring InstrumentName() const { return InstrumentNames[m_instrument_id]; }
 
@@ -62,7 +62,7 @@ private:
    unsigned char m_instrument_id;
 
    microseconds_t m_running_microseconds;
-   long long m_last_event;
+   size_t m_last_event;
 };
 #pragma pack(pop)
 

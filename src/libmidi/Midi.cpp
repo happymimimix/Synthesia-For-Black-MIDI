@@ -148,12 +148,11 @@ Midi Midi::ReadFromStream(istream &stream)
       // overload and breeze through the whole list.
       size_t tempo_hint = 0;
       const MidiEventPulsesList *event_pulses = m.m_tracks[i].EventPulses();
-      MidiEventMicrosecondList event_usecs;
+      MidiEventMicrosecondList *event_usecs = m.m_tracks[i].GetEventUsecsNonConst();
       for (size_t j = 0; j < event_pulses->size(); ++j)
       {
-         event_usecs.push_back(m.GetEventPulseInMicroseconds((*event_pulses)[j], pulses_per_quarter_note, tempo_hint));
+         event_usecs->push_back(m.GetEventPulseInMicroseconds((*event_pulses)[j], pulses_per_quarter_note, tempo_hint));
       }
-      m.m_tracks[i].SetEventUsecs(event_usecs);
    }
 
    m.m_initialized = true;

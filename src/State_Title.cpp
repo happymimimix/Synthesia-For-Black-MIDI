@@ -371,7 +371,7 @@ void TitleState::PlayDevicePreview(microseconds_t delta_microseconds)
    if (!m_state.midi_out) return;
 
    for (const std::pair<unsigned short, MidiEventListRange>& range : m_state.midi->Update(delta_microseconds))
-   for (MidiEvent* ev = range.second.first; ev <= range.second.second; ++ev)
+   for (MidiEvent* ev = range.second.first; ev < range.second.second; ++ev)
    {
       m_state.midi_out->Write(*ev);
 

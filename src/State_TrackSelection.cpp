@@ -268,7 +268,7 @@ void TrackSelectionState::PlayTrackPreview(microseconds_t delta_microseconds)
 
    const MidiTrackList* trklist = m_state.midi->Tracks();
    const MidiEventListRange range = const_cast<MidiTrack*>(trklist->data() + m_preview_track_id)->Update(delta_microseconds);
-   for (MidiEvent* ev = range.first; ev <= range.second; ++ev)
+   for (MidiEvent* ev = range.first; ev < range.second; ++ev)
    {
       if (m_state.midi_out) m_state.midi_out->Write(*ev);
    }

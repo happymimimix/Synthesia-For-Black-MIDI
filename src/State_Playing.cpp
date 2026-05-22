@@ -145,7 +145,7 @@ int PlayingState::CalcKeyboardHeight() const
 void PlayingState::Play(microseconds_t delta_microseconds)
 {
    for (const std::pair<unsigned short, MidiEventListRange>& range : m_state.midi->Update(delta_microseconds))
-   for (MidiEvent* ev = range.second.first; ev <= range.second.second; ++ev)
+   for (MidiEvent* ev = range.second.first; ev < range.second.second; ++ev)
    {
       const unsigned short &track_id = range.first;
 
@@ -187,7 +187,7 @@ void PlayingState::Play(microseconds_t delta_microseconds)
 #ifdef WIN32
          m_state.midi_in->InputCallback(MIM_DATA, (unsigned long(ev->StatusCode())) | (unsigned long(ev->NoteNumber()) << 8) | (unsigned long(ev->NoteVelocity()) << 16), NULL);
 #else
-         m_state.midi_in->InputCallback(ev.StatusCode(), ev.NoteNumber(), ev.NoteVelocity());
+         m_state.midi_in->InputCallback(ev->StatusCode(), ev->NoteNumber(), ev->NoteVelocity());
 #endif
       }
 #endif
