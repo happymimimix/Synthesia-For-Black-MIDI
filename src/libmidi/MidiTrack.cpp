@@ -229,23 +229,19 @@ void MidiTrack::DiscoverInstrument()
 void MidiTrack::Reset()
 {
    m_running_microseconds = 0;
-   m_last_event = -1;
+   m_last_event = 0;
 }
 
-MidiEventList MidiTrack::Update(microseconds_t delta_microseconds)
+MidiEventListRange MidiTrack::Update(microseconds_t delta_microseconds)
 {
+   MidiEventListRange range = {};
+   range.first = m_events.data() + m_last_event;
    m_running_microseconds += delta_microseconds;
-
-   MidiEventList evs;
-   for (size_t i = m_last_event + 1; i < m_events.size(); ++i)
+   for (; m_last_event < m_events.size(); ++m_last_event)
    {
-      if (m_event_usecs[i] <= m_running_microseconds)
-      {
-         evs.push_back(m_events[i]);
-         m_last_event = static_cast<long long>(i);
-      }
-      else break;
+      if (m_event_usecs[m_last_event] > m_running_microseconds) break;
    }
+   range.second = m_events.data() + m_last_event;
 
-   return evs;
+   return range;
 }

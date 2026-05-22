@@ -110,7 +110,7 @@ void PlayingState::Init()
    {
       if (m_state.track_properties[i].mode == Track::ModeYouPlay)
       {
-         m_look_ahead_you_play_note_count += m_state.midi->Tracks()[i].AggregateNoteCount();
+         m_look_ahead_you_play_note_count += (*m_state.midi->Tracks())[i].AggregateNoteCount();
          m_any_you_play_tracks = true;
       }
    }
@@ -144,12 +144,10 @@ int PlayingState::CalcKeyboardHeight() const
 
 void PlayingState::Play(microseconds_t delta_microseconds)
 {
-   MidiEventListWithTrackId evs = m_state.midi->Update(delta_microseconds);
-
-   for (const auto& evit : evs)
+   for (const std::pair<unsigned short, MidiEventListRange>& range : m_state.midi->Update(delta_microseconds))
+   for (MidiEvent* ev = range.second.first; ev <= range.second.second; ++ev)
    {
-      const unsigned short &track_id = evit.first;
-      const MidiEvent &ev = evit.second;
+      const unsigned short &track_id = range.first;
 
       // Draw refers to the keys lighting up (automatically) -- not necessarily
       // the falling notes.  The KeyboardDisplay object contains its own logic
@@ -167,27 +165,27 @@ void PlayingState::Play(microseconds_t delta_microseconds)
       // Even in "You Play" tracks, we have to play the non-note
       // events as per usual.
       if (m_state.track_properties[track_id].mode
-         && ev.Type() != MidiEventType_NoteOn
-         && ev.Type() != MidiEventType_NoteOff)
+         && ev->Type() != MidiEventType_NoteOn
+         && ev->Type() != MidiEventType_NoteOff)
       {
          play = true;
       }
 
-      if (draw && (ev.Type() == MidiEventType_NoteOn || ev.Type() == MidiEventType_NoteOff))
+      if (draw && (ev->Type() == MidiEventType_NoteOn || ev->Type() == MidiEventType_NoteOff))
       {
-         unsigned char vel = ev.NoteVelocity();
-         const string name = MidiEvent::NoteName(ev.NoteNumber());
+         unsigned char vel = ev->NoteVelocity();
+         const string name = MidiEvent::NoteName(ev->NoteNumber());
 
          m_keyboard->SetKeyActive(name, (vel > 0), m_state.track_properties[track_id].color);
       }
 
-      if (play && m_state.midi_out) m_state.midi_out->Write(ev);
+      if (play && m_state.midi_out) m_state.midi_out->Write(*ev);
 
 #ifndef NOAI
-      if (m_state.track_properties[track_id].mode == Track::ModeYouPlay && m_state.midi_in && m_state.midi_in->GetDeviceDescription().id == UINT32_MAX-1 && (ev.Type() == MidiEventType_NoteOn || ev.Type() == MidiEventType_NoteOff)) {
+      if (m_state.track_properties[track_id].mode == Track::ModeYouPlay && m_state.midi_in && m_state.midi_in->GetDeviceDescription().id == UINT32_MAX-1 && (ev->Type() == MidiEventType_NoteOn || ev->Type() == MidiEventType_NoteOff)) {
          // Write midi input buffer for real!
 #ifdef WIN32
-         m_state.midi_in->InputCallback(MIM_DATA, (unsigned long(ev.StatusCode())) | (unsigned long(ev.NoteNumber()) << 8) | (unsigned long(ev.NoteVelocity()) << 16), NULL);
+         m_state.midi_in->InputCallback(MIM_DATA, (unsigned long(ev->StatusCode())) | (unsigned long(ev->NoteNumber()) << 8) | (unsigned long(ev->NoteVelocity()) << 16), NULL);
 #else
          m_state.midi_in->InputCallback(ev.StatusCode(), ev.NoteNumber(), ev.NoteVelocity());
 #endif

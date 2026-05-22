@@ -16,6 +16,7 @@ class Midi;
 class MidiEvent;
 
 typedef std::vector<MidiEvent> MidiEventList;
+typedef std::pair<MidiEvent*,MidiEvent*> MidiEventListRange;
 typedef std::vector<unsigned long> MidiEventPulsesList;
 typedef std::vector<microseconds_t> MidiEventMicrosecondList;
 
@@ -26,13 +27,9 @@ public:
    static MidiTrack ReadFromStream(std::istream &stream);
    static MidiTrack CreateBlankTrack() { return MidiTrack(); }
 
-   MidiEventList &Events() { return m_events; }
-   MidiEventPulsesList &EventPulses() { return m_event_pulses; }
-   MidiEventMicrosecondList &EventUsecs() { return m_event_usecs; }
-
-   const MidiEventList &Events() const { return m_events; }
-   const MidiEventPulsesList &EventPulses() const { return m_event_pulses; }
-   const MidiEventMicrosecondList &EventUsecs() const { return m_event_usecs; }
+   const MidiEventList *Events() const { return &m_events; }
+   const MidiEventPulsesList *EventPulses() const { return &m_event_pulses; }
+   const MidiEventMicrosecondList *EventUsecs() const { return &m_event_usecs; }
 
    void SetEventUsecs(const MidiEventMicrosecondList &event_usecs) { m_event_usecs = event_usecs; }
 
@@ -43,7 +40,7 @@ public:
    bool hasNotes() const { return (m_note_count > 0); }
 
    void Reset();
-   MidiEventList Update(microseconds_t delta_microseconds);
+   MidiEventListRange Update(microseconds_t delta_microseconds);
 
    unsigned int AggregateNoteCount() const { return m_note_count; }
 

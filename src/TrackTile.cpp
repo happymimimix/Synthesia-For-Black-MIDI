@@ -79,7 +79,7 @@ int TrackTile::LookupGraphic(TrackTileGraphic graphic, bool button_hovering) con
 
 void TrackTile::Draw(Renderer &renderer, const Midi *midi, Tga *buttons, Tga *box) const
 {
-   const MidiTrack &track = midi->Tracks()[m_track_id];
+   const MidiTrack &track = (*midi->Tracks())[m_track_id];
 
    bool gray_out_buttons = false;
    Color light  = Track::ColorNoteWhite[m_color];

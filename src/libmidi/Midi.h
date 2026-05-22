@@ -16,8 +16,7 @@ class MidiError;
 class MidiEvent;
 
 typedef std::vector<MidiTrack> MidiTrackList;
-typedef std::vector<MidiEvent> MidiEventList;
-typedef std::vector<std::pair<unsigned short, MidiEvent>> MidiEventListWithTrackId;
+typedef std::vector<std::pair<unsigned short,MidiEventListRange>> MidiEventListRangeList;
 
 // NOTE: This library's MIDI loading and handling is destructive.  Perfect
 //       1:1 serialization routines will not be possible without quite a
@@ -28,11 +27,11 @@ public:
    static Midi ReadFromFile(const std::wstring &filename);
    static Midi ReadFromStream(std::istream &stream);
 
-   const std::vector<MidiTrack> &Tracks() const { return m_tracks; }
+   const MidiTrackList *Tracks() const { return &m_tracks; }
 
    const TranslatedNoteSet *Notes() const { return &m_translated_notes; }
 
-   MidiEventListWithTrackId Update(microseconds_t delta_microseconds);
+   MidiEventListRangeList Update(microseconds_t delta_microseconds);
 
    void Reset(microseconds_t lead_in_microseconds, microseconds_t lead_out_microseconds);
 

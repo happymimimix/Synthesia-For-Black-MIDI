@@ -147,11 +147,11 @@ Midi Midi::ReadFromStream(istream &stream)
       // The pulses are already sorted, so we can use the hint
       // overload and breeze through the whole list.
       size_t tempo_hint = 0;
-      const MidiEventPulsesList& event_pulses = m.m_tracks[i].EventPulses();
+      const MidiEventPulsesList *event_pulses = m.m_tracks[i].EventPulses();
       MidiEventMicrosecondList event_usecs;
-      for (size_t j = 0; j < event_pulses.size(); ++j)
+      for (size_t j = 0; j < event_pulses->size(); ++j)
       {
-         event_usecs.push_back(m.GetEventPulseInMicroseconds(event_pulses[j], pulses_per_quarter_note, tempo_hint));
+         event_usecs.push_back(m.GetEventPulseInMicroseconds((*event_pulses)[j], pulses_per_quarter_note, tempo_hint));
       }
       m.m_tracks[i].SetEventUsecs(event_usecs);
    }
@@ -208,10 +208,10 @@ void Midi::BuildTempoTrack()
    // Run through each track looking for tempo and time signature events.
    for (MidiTrackList::const_iterator t = m_tracks.begin(); t != m_tracks.end(); ++t)
    {
-      for (size_t i = 0; i < t->Events().size(); ++i)
+      for (size_t i = 0; i < t->Events()->size(); ++i)
       {
-         const MidiEvent &ev = t->Events()[i];
-         unsigned long ev_pulses = t->EventPulses()[i];
+         const MidiEvent &ev = (*t->Events())[i];
+         unsigned long ev_pulses = (*t->EventPulses())[i];
 
          if (ev.Type() != MidiEventType_Meta) continue;
 
@@ -233,8 +233,8 @@ void Midi::BuildTempoTrack()
    // Create a new track (always the last track in the track list)
    m_tracks.push_back(MidiTrack::CreateBlankTrack());
 
-   MidiEventList &tempo_track_events = m_tracks[m_tracks.size()-1].Events();
-   MidiEventPulsesList &tempo_track_event_pulses = m_tracks[m_tracks.size()-1].EventPulses();
+   MidiEventList *tempo_track_events = const_cast<MidiEventList*>(m_tracks[m_tracks.size()-1].Events());
+   MidiEventPulsesList *tempo_track_event_pulses = const_cast<MidiEventPulsesList*>(m_tracks[m_tracks.size()-1].EventPulses());
 
    // Copy over all our tempo events
    unsigned long previous_absolute_pulses = 0;
@@ -248,8 +248,8 @@ void Midi::BuildTempoTrack()
       previous_absolute_pulses = absolute_pulses;
 
       // Add them to the track
-      tempo_track_event_pulses.push_back(absolute_pulses);
-      tempo_track_events.push_back(ev);
+      tempo_track_event_pulses->push_back(absolute_pulses);
+      tempo_track_events->push_back(ev);
    }
 }
 
@@ -260,8 +260,8 @@ unsigned long Midi::FindFirstNotePulse()
    // Find the very last value it could ever possibly be, to start with
    for (MidiTrackList::const_iterator t = m_tracks.begin(); t != m_tracks.end(); ++t)
    {
-      if (t->EventPulses().size() == 0) continue;
-      unsigned long pulses = t->EventPulses().back();
+      if (t->EventPulses()->size() == 0) continue;
+      unsigned long pulses = t->EventPulses()->back();
 
       if (pulses > first_note_pulse) first_note_pulse = pulses;
    }
@@ -270,11 +270,11 @@ unsigned long Midi::FindFirstNotePulse()
    // first note_on event
    for (MidiTrackList::const_iterator t = m_tracks.begin(); t != m_tracks.end(); ++t)
    {
-      for (size_t ev_id = 0; ev_id < t->Events().size(); ++ev_id)
+      for (size_t ev_id = 0; ev_id < t->Events()->size(); ++ev_id)
       {
-         if (t->Events()[ev_id].Type() == MidiEventType_NoteOn)
+         if ((*t->Events())[ev_id].Type() == MidiEventType_NoteOn)
          {
-            unsigned long note_pulse = t->EventPulses()[ev_id];
+            unsigned long note_pulse = (*t->EventPulses())[ev_id];
 
             if (note_pulse < first_note_pulse) first_note_pulse = note_pulse;
 
@@ -321,14 +321,14 @@ void Midi::BuildTempoIndex(unsigned short pulses_per_quarter_note)
    unsigned long last_pulse = 0;
    microseconds_t current_tempo = DefaultUSTempo;
 
-   for (size_t i = 0; i < tempo_track.Events().size(); ++i)
+   for (size_t i = 0; i < tempo_track.Events()->size(); ++i)
    {
-      unsigned long pulse = tempo_track.EventPulses()[i];
+      unsigned long pulse = (*tempo_track.EventPulses())[i];
 
       // Accumulate wall-clock time for the segment we just passed
       running_usec += ConvertPulsesToMicroseconds(pulse - last_pulse, current_tempo, pulses_per_quarter_note);
 
-      current_tempo = tempo_track.Events()[i].GetTempoInUsPerQn();
+      current_tempo = (*tempo_track.Events())[i].GetTempoInUsPerQn();
       last_pulse = pulse;
 
       m_tempo_pulse_marks.push_back(pulse);
@@ -352,9 +352,9 @@ void Midi::BuildBeatLines(unsigned short pulses_per_quarter_note)
    unsigned long last_pulse = 0;
    for (size_t t = 0; t < m_tracks.size(); ++t)
    {
-      if (m_tracks[t].EventPulses().size() > 0)
+      if (m_tracks[t].EventPulses()->size() > 0)
       {
-         unsigned long p = m_tracks[t].EventPulses().back();
+         unsigned long p = m_tracks[t].EventPulses()->back();
          if (p > last_pulse) last_pulse = p;
       }
    }
@@ -449,9 +449,9 @@ void Midi::Reset(microseconds_t lead_in_microseconds, microseconds_t lead_out_mi
    for (MidiTrackList::iterator i = m_tracks.begin(); i != m_tracks.end(); ++i) { i->Reset(); }
 }
 
-MidiEventListWithTrackId Midi::Update(microseconds_t delta_microseconds)
+MidiEventListRangeList Midi::Update(microseconds_t delta_microseconds)
 {
-   MidiEventListWithTrackId aggregated_events;
+    MidiEventListRangeList aggregated_events;
    if (!m_initialized) return aggregated_events;
 
    m_microsecond_song_position += delta_microseconds;
@@ -467,10 +467,7 @@ MidiEventListWithTrackId Midi::Update(microseconds_t delta_microseconds)
 
    for (unsigned short trk = 0; trk < static_cast<unsigned short>(m_tracks.size()); ++trk)
    {
-      for (const MidiEvent& evt : m_tracks[trk].Update(delta_microseconds))
-      {
-         aggregated_events.insert(aggregated_events.end(), make_pair(trk, evt));
-      }
+      aggregated_events.push_back(make_pair(trk,m_tracks[trk].Update(delta_microseconds)));
    }
 
    return aggregated_events;

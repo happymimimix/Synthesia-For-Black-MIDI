@@ -29,9 +29,9 @@ void TrackSelectionState::Init()
 
    // Prepare a very simple count of the playable tracks first
    int track_count = 0;
-   for (size_t i = 0; i < m.Tracks().size(); ++i)
+   for (size_t i = 0; i < m.Tracks()->size(); ++i)
    {
-      if (m.Tracks()[i].hasNotes()) track_count++;
+      if ((*m.Tracks())[i].hasNotes()) track_count++;
    }
 
    m_back_button = ButtonState(Layout::ScreenMarginX,
@@ -72,9 +72,9 @@ void TrackSelectionState::Init()
    int tiles_on_this_line = 0;
    int tiles_on_this_page = 0;
    int current_y = starting_y;
-   for (unsigned short i = 0; i < static_cast<unsigned short>(m.Tracks().size()); ++i)
+   for (unsigned short i = 0; i < static_cast<unsigned short>(m.Tracks()->size()); ++i)
    {
-      const MidiTrack &t = m.Tracks()[i];
+      const MidiTrack &t = (*m.Tracks())[i];
       if (!t.hasNotes()) continue;
 
       int x = global_x_offset + (TrackTileWidth + Layout::ScreenMarginX)*tiles_on_this_line;
@@ -116,7 +116,7 @@ void TrackSelectionState::Init()
 std::vector<Track::Properties> TrackSelectionState::BuildTrackProperties() const
 {
    std::vector<Track::Properties> props;
-   for (size_t i = 0; i < m_state.midi->Tracks().size(); ++i)
+   for (size_t i = 0; i < m_state.midi->Tracks()->size(); ++i)
    {
       props.push_back(Track::Properties());
    }
@@ -236,13 +236,13 @@ void TrackSelectionState::Update()
 
             // Find the first note in this track so we can skip right to the good part.
             microseconds_t additional_time = -PreviewLeadIn;
-            const MidiTrack &track = m_state.midi->Tracks()[m_preview_track_id];
-            for (unsigned short i = 0; i < static_cast<unsigned short>(track.Events().size()); ++i)
+            const MidiTrack &track = (*m_state.midi->Tracks())[m_preview_track_id];
+            for (unsigned short i = 0; i < static_cast<unsigned short>(track.Events()->size()); ++i)
             {
-               const MidiEvent &ev = track.Events()[i];
+               const MidiEvent &ev = (*track.Events())[i];
                if (ev.Type() == MidiEventType_NoteOn && ev.NoteVelocity() > 0)
                {
-                  additional_time += track.EventUsecs()[i] - m_state.midi->GetDeadAirStartOffsetMicroseconds() - 1;
+                  additional_time += (*track.EventUsecs())[i] - m_state.midi->GetDeadAirStartOffsetMicroseconds() - 1;
                   break;
                }
             }
@@ -266,14 +266,11 @@ void TrackSelectionState::PlayTrackPreview(microseconds_t delta_microseconds)
 {
    if (!m_preview_on) return;
 
-   MidiEventListWithTrackId evs = m_state.midi->Update(delta_microseconds);
-
-   for (MidiEventListWithTrackId::const_iterator i = evs.begin(); i != evs.end(); ++i)
+   const MidiTrackList* trklist = m_state.midi->Tracks();
+   const MidiEventListRange range = const_cast<MidiTrack*>(trklist->data() + m_preview_track_id)->Update(delta_microseconds);
+   for (MidiEvent* ev = range.first; ev <= range.second; ++ev)
    {
-      const MidiEvent &ev = i->second;
-      if (i->first != m_preview_track_id) continue;
-
-      if (m_state.midi_out) m_state.midi_out->Write(ev);
+      if (m_state.midi_out) m_state.midi_out->Write(*ev);
    }
 }
 
