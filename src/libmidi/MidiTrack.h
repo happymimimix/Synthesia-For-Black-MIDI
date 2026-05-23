@@ -31,8 +31,6 @@ public:
    const MidiEventPulsesList *EventPulses() const { return &m_event_pulses; }
    const MidiEventMicrosecondList *EventUsecs() const { return &m_event_usecs; }
 
-   MidiEventMicrosecondList *GetEventUsecsNonConst() { return &m_event_usecs; }
-
    const std::wstring InstrumentName() const { return InstrumentNames[m_instrument_id]; }
 
    // Reports whether this track contains any Note-On MIDI events
@@ -53,9 +51,9 @@ private:
 
    void DiscoverInstrument();
 
-   MidiEventList m_events;
-   MidiEventPulsesList m_event_pulses;
-   MidiEventMicrosecondList m_event_usecs;
+   MidiEventList m_events = {};
+   MidiEventPulsesList m_event_pulses = {};
+   MidiEventMicrosecondList m_event_usecs = {};
 
    unsigned int m_note_count;
 
