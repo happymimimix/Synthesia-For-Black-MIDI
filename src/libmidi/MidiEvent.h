@@ -45,12 +45,12 @@ public:
    bool GetSimpleEvent(MidiEventSimple *simple) const;
 
    MidiEventType Type() const;
-   unsigned long GetDeltaPulses() const { return m_pulses_type == DeltaPulse ? *reinterpret_cast<const unsigned long*>(&m_pulses) : throw MidiError(MidiError_PulseFormatError); }
+   unsigned int GetDeltaPulses() const { return m_pulses_type == DeltaPulse ? *reinterpret_cast<const unsigned int*>(&m_pulses) : throw MidiError(MidiError_PulseFormatError); }
    unsigned long long GetAbsPulses() const { return m_pulses_type == AbsPulse ? m_pulses : throw MidiError(MidiError_PulseFormatError); }
    unsigned long long GetAbsMicrosecs() const { return m_pulses_type == AbsMicrosec ? m_pulses : throw MidiError(MidiError_PulseFormatError); }
 
    // This is generally for internal Midi library use only.
-   void SetPulses(PulseType type, unsigned long long delta_pulses) { m_pulses_type = type; if (m_pulses_type == DeltaPulse) *reinterpret_cast<unsigned long*>(&m_pulses) = static_cast<unsigned long>(delta_pulses); else m_pulses = delta_pulses; }
+   void SetPulses(PulseType type, unsigned long long delta_pulses) { m_pulses_type = type; if (m_pulses_type == DeltaPulse) *reinterpret_cast<unsigned int*>(&m_pulses) = static_cast<unsigned int>(delta_pulses); else m_pulses = delta_pulses; }
 
    NoteId NoteNumber() const;
 
@@ -75,7 +75,7 @@ public:
 
    // Retrieve the tempo from a tempo meta event in microseconds
    // per quarter note.  (Non-meta-tempo events will throw an error).
-   unsigned long GetTempoInUsPerQn() const;
+   unsigned int GetTempoInUsPerQn() const;
 
    // Retrieve the time signature numerator (beats per bar) and
    // denominator (beat unit, e.g. 4 = quarter note).  The

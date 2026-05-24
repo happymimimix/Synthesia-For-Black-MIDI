@@ -68,7 +68,7 @@ MidiEvent MidiEvent::NullEvent()
 void MidiEvent::ReadMeta(std::istream &stream)
 {
    stream.read(reinterpret_cast<char*>(&m_meta_type), sizeof(unsigned char));
-   unsigned long meta_length = parse_variable_length(stream);
+   unsigned int meta_length = parse_variable_length(stream);
 
    char *buffer = new char[meta_length + 1];
    buffer[meta_length] = 0;
@@ -150,7 +150,7 @@ void MidiEvent::ReadSysEx(std::istream &stream)
 {
    // NOTE: We would have to keep SysEx events around if we
    // wanted to reproduce 1:1 MIDIs between file Save/Load
-   unsigned long sys_ex_length = parse_variable_length(stream);
+   unsigned int sys_ex_length = parse_variable_length(stream);
 
    // Skip reading actual data for SysEx events
    stream.seekg(sys_ex_length, std::ios_base::cur);
@@ -290,7 +290,7 @@ signed char MidiEvent::NoteVelocity() const
    return m_data2 & 0x7F;
 }
 
-unsigned long MidiEvent::GetTempoInUsPerQn() const
+unsigned int MidiEvent::GetTempoInUsPerQn() const
 {
    if (Type() != MidiEventType_Meta || MetaType() != MidiMetaEvent_TempoChange)
    {

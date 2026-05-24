@@ -127,7 +127,7 @@ MidiCommIn::~MidiCommIn()
 // This is only called by the callback function.  The reason this
 // is public (and the callback isn't a static member) is to keep the
 // HMIDIIN definition out of this classes header.
-void MidiCommIn::InputCallback(unsigned int msg, unsigned long p1, unsigned long)
+void MidiCommIn::InputCallback(unsigned int msg, unsigned int p1, unsigned int)
 {
    try
    {
@@ -278,7 +278,7 @@ void MidiCommOut::Write(const MidiEvent &out)
    {
       // You could use a bunch of MAKELONG(MAKEWORD(lo,hi), MAKEWORD(lo,hi)) stuff here, but
       // this is easier to read and likely faster.
-      unsigned long message = simple.status | (simple.byte1 << 8) | (simple.byte2 << 16);
+      unsigned int message = simple.status | (simple.byte1 << 8) | (simple.byte2 << 16);
 
       midi_check(midiOutShortMsg(m_output_device, message));
    }
@@ -462,7 +462,7 @@ MidiCommIn::~MidiCommIn()
    pthread_mutex_destroy(&m_mutex);
 }
 
-void MidiCommIn::InputCallback(unsigned int status, unsigned long byte1, unsigned long byte2)
+void MidiCommIn::InputCallback(unsigned int status, unsigned int byte1, unsigned int byte2)
 {
    unsigned char small_status = (unsigned char)status;
    unsigned char small_byte1  = (unsigned char)byte1;

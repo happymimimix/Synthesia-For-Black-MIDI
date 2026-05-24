@@ -54,7 +54,7 @@ static pascal OSStatus KeyEventHandlerProc(EventHandlerCallRef callRef, EventRef
 static pascal OSStatus WindowEventHandlerProc(EventHandlerCallRef callRef, EventRef inEvent, void *);
 static pascal OSStatus AppleEventHandlerProc(EventHandlerCallRef callRef, EventRef inEvent, void *);
 
-static pascal OSErr OpenEventHandlerProc(const AppleEvent *event, AppleEvent *, long);
+static pascal OSErr OpenEventHandlerProc(const AppleEvent *event, AppleEvent *, int);
 
 #endif
 
@@ -607,7 +607,7 @@ static pascal void GameLoop(EventLoopTimerRef inTimer, void *)
 
 }
 
-static pascal OSErr OpenEventHandlerProc(const AppleEvent *event, AppleEvent *, long)
+static pascal OSErr OpenEventHandlerProc(const AppleEvent *event, AppleEvent *, int)
 {
    AEDescList docs;
    OSStatus status = AEGetParamDesc(event, keyDirectObject, typeAEList, &docs);
@@ -615,7 +615,7 @@ static pascal OSErr OpenEventHandlerProc(const AppleEvent *event, AppleEvent *, 
    
    // We can only handle the first dragged-in file, so
    // all that matters is that the list isn't empty.
-   long item_count = 0;
+   int item_count = 0;
    AECountItems(&docs, &item_count);
    if (item_count == 0) return noErr;
    

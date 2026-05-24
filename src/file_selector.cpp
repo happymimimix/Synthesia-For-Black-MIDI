@@ -152,11 +152,11 @@ void RequestMidiFilename(std::wstring *returned_filename, std::wstring *returned
       return;
    }
    
-   long item_count = 0;
+   int item_count = 0;
    status = AECountItems(&navReply.selection, &item_count);
    if (status != noErr) throw SynthesiaError(WSTRING(L"Couldn't count resulting items from open dialog.  Error code: " << static_cast<int>(status)));
       
-   for (long i = 1; i <= item_count; i++)
+   for (int i = 1; i <= item_count; i++)
    {
       FSRef fsRef;
       status = AEGetNthPtr(&navReply.selection, i, typeFSRef, 0, 0, &fsRef, sizeof(FSRef), 0);
@@ -204,7 +204,7 @@ std::wstring TrimFilename(const std::wstring &filename)
       wstring extension = StringLower(*i);
       wstring::size_type len = extension.length();
 
-      wstring song_end = song_lower.substr(std::max((unsigned long)0, (unsigned long)(song_lower.length() - len)), song_lower.length());
+      wstring song_end = song_lower.substr(std::max((unsigned int)0, (unsigned int)(song_lower.length() - len)), song_lower.length());
       if (song_end == extension) song_title = song_title.substr(0, song_title.length() - len);
       song_lower = StringLower(song_title);
    }

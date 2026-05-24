@@ -94,7 +94,7 @@ protected:
    virtual void Draw(Renderer &renderer) const = 0;
 
    // How much time elapsed since the last update
-   unsigned long GetDeltaMilliseconds() const { return m_last_delta_milliseconds; }
+   unsigned int GetDeltaMilliseconds() const { return m_last_delta_milliseconds; }
 
    int GetStateWidth() const;
    int GetStateHeight() const;
@@ -123,12 +123,12 @@ private:
    void SetManager(GameStateManager *manager);
    GameStateManager *m_manager;
 
-   void UpdateStateMicroseconds(unsigned long delta_ms)
+   void UpdateStateMicroseconds(unsigned int delta_ms)
    {
       m_last_delta_milliseconds = delta_ms;
    }
 
-   unsigned long m_last_delta_milliseconds;
+   unsigned int m_last_delta_milliseconds;
 
    friend class GameStateManager;
 };
@@ -173,7 +173,7 @@ private:
    GameState *m_next_state;
    GameState *m_current_state;
 
-   unsigned long m_last_milliseconds;
+   unsigned int m_last_milliseconds;
    unsigned char m_key_presses;
    unsigned char m_last_key_presses;
 

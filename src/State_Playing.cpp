@@ -25,7 +25,7 @@ using namespace std;
 #include "libmidi/MidiComm.h"
 
 wstring pause_text;
-static constexpr unsigned long FRAME_DELAYS[3] = { 17, 17, 16 };
+static constexpr unsigned int FRAME_DELAYS[3] = { 17, 17, 16 };
 
 void PlayingState::SetupNoteState()
 {
@@ -185,7 +185,7 @@ void PlayingState::Play(microseconds_t delta_microseconds)
       if (m_state.track_properties[track_id].mode == Track::ModeYouPlay && m_state.midi_in && m_state.midi_in->GetDeviceDescription().id == UINT32_MAX-1 && (ev->Type() == MidiEventType_NoteOn || ev->Type() == MidiEventType_NoteOff)) {
          // Write midi input buffer for real!
 #ifdef WIN32
-         m_state.midi_in->InputCallback(MIM_DATA, (unsigned long(ev->StatusCode())) | (unsigned long(ev->NoteNumber()) << 8) | (unsigned long(ev->NoteVelocity()) << 16), NULL);
+         m_state.midi_in->InputCallback(MIM_DATA, (unsigned int(ev->StatusCode())) | (unsigned int(ev->NoteNumber()) << 8) | (unsigned int(ev->NoteVelocity()) << 16), NULL);
 #else
          m_state.midi_in->InputCallback(ev->StatusCode(), ev->NoteNumber(), ev->NoteVelocity());
 #endif

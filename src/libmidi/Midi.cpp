@@ -57,7 +57,7 @@ Midi Midi::ReadFromStream(istream &stream)
    // defined and will always have a 4-byte header.  We use 5 so we get
    // free null termination.
    char           header_id[5] = { 0, 0, 0, 0, 0 };
-   unsigned long  header_length;
+   unsigned int  header_length;
    unsigned short format;
    unsigned short track_count;
    unsigned short time_division;
@@ -70,13 +70,13 @@ Midi Midi::ReadFromStream(istream &stream)
       else
       {
          // We know how to support RIFF files
-         stream.seekg(sizeof(unsigned long) * 4, std::ios_base::cur);
+         stream.seekg(sizeof(unsigned int) * 4, std::ios_base::cur);
          // Call this recursively, without the RIFF header this time
          return ReadFromStream(stream);
       }
    }
 
-   stream.read(reinterpret_cast<char*>(&header_length), sizeof(unsigned long));
+   stream.read(reinterpret_cast<char*>(&header_length), sizeof(unsigned int));
    stream.read(reinterpret_cast<char*>(&format),        sizeof(unsigned short));
    stream.read(reinterpret_cast<char*>(&track_count),   sizeof(unsigned short));
    stream.read(reinterpret_cast<char*>(&time_division), sizeof(unsigned short));
@@ -166,7 +166,7 @@ Midi Midi::ReadFromStream(istream &stream)
    // give back the memory now.
    std::vector<ticks_t>().swap(m.m_tempo_pulse_marks);
    std::vector<microseconds_t>().swap(m.m_tempo_usec_marks);
-   std::vector<unsigned long>().swap(m.m_tempo_values);
+   std::vector<unsigned int>().swap(m.m_tempo_values);
    // Time signature data - only used by BuildBeatLines
    std::vector<ticks_t>().swap(m.m_timesig_pulse_marks);
    std::vector<unsigned char>().swap(m.m_timesig_numerators);
@@ -254,7 +254,7 @@ void Midi::BuildTempoIndex(unsigned short pulses_per_quarter_note)
    // Now we process them for real after sorting.
    microseconds_t running_usec = 0;
    ticks_t last_pulse = 0;
-   unsigned long current_tempo = DefaultUSTempo;
+   unsigned int current_tempo = DefaultUSTempo;
    for (std::map<ticks_t, const MidiEvent*>::const_iterator i = tempo_events.begin(); i != tempo_events.end(); ++i)
    {
       // Accumulate wall-clock time for the segment we just passed

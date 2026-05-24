@@ -162,8 +162,8 @@ void GameStateManager::ChangeState(GameState *new_state)
 void GameStateManager::Update(bool skip_this_update)
 {
    // Manager's timer grows constantly
-   const unsigned long now = Compatible::GetMilliseconds();
-   const unsigned long delta = now - m_last_milliseconds;
+   const unsigned int now = Compatible::GetMilliseconds();
+   const unsigned int delta = now - m_last_milliseconds;
    m_last_milliseconds = now;
 
    // Now that we've updated the time, we can return if

@@ -53,11 +53,11 @@ MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
    // defined and will always have a 4-byte header.  We use 5 so we get
    // free null termination.
    char header_id[5] = { 0, 0, 0, 0, 0 };
-   unsigned long track_length = 0;
+   unsigned int track_length = 0;
 
    stream.read(header_id, MidiTrackHeader.length());
    if (stream.fail() || std::string(header_id) != MidiTrackHeader) throw MidiError(MidiError_BadTrackHeaderType);
-   stream.read(reinterpret_cast<char*>(&track_length), sizeof(unsigned long));
+   stream.read(reinterpret_cast<char*>(&track_length), sizeof(unsigned int));
    if (stream.fail()) throw MidiError(MidiError_TrackHeaderTooShort);
 
    // Pull the full track out of the file all at once -- there is an

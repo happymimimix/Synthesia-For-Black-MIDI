@@ -59,7 +59,7 @@ public:
    // with a variety of Windows data (error messages, structs, and
    // whatnot).  The Mac side uses the three parameters as the usual
    // MIDI event triple.  (SysEx is filtered out in both cases.)
-   void InputCallback(unsigned int msg, unsigned long p1, unsigned long p2);
+   void InputCallback(unsigned int msg, unsigned int p1, unsigned int p2);
 
 private:
    MidiCommDescription m_description;

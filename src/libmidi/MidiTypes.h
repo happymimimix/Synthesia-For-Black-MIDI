@@ -7,6 +7,6 @@
 
 typedef long long microseconds_t;
 typedef long long ticks_t;
-typedef long deltaticks_t;
+typedef int deltaticks_t;
 
 #endif

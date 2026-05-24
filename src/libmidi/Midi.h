@@ -57,9 +57,9 @@ public:
    const std::vector<microseconds_t> &BarLines() const { return m_bar_lines; }
 
 private:
-   const static unsigned long DefaultBPM = 120;
-   const static unsigned long OneMinuteInMicroseconds = 60000000;
-   const static unsigned long DefaultUSTempo = OneMinuteInMicroseconds / DefaultBPM;
+   const static unsigned int DefaultBPM = 120;
+   const static unsigned int OneMinuteInMicroseconds = 60000000;
+   const static unsigned int DefaultUSTempo = OneMinuteInMicroseconds / DefaultBPM;
 
    static microseconds_t ConvertPulsesToMicroseconds(unsigned long long pulses, microseconds_t tempo, unsigned short pulses_per_quarter_note);
 
@@ -87,7 +87,7 @@ private:
    // beginning every time.
    std::vector<ticks_t>  m_tempo_pulse_marks;
    std::vector<microseconds_t> m_tempo_usec_marks;
-   std::vector<unsigned long> m_tempo_values;
+   std::vector<unsigned int> m_tempo_values;
 
    // Time signature data collected during BuildTempoTrack.
    std::vector<ticks_t>  m_timesig_pulse_marks;

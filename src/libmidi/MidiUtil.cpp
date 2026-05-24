@@ -11,7 +11,7 @@
 
 using namespace std;
 
-unsigned long BigToSystem32(unsigned long x) 
+unsigned int BigToSystem32(unsigned int x) 
 {
 #ifdef WIN32
    return ((((x) & 0x00ff0000) >> 8 )  |
@@ -35,15 +35,15 @@ unsigned short BigToSystem16(unsigned short x)
 
 
 
-unsigned long parse_variable_length(istream &in)
+unsigned int parse_variable_length(istream &in)
 {
-   register unsigned long value = in.get();
+   register unsigned int value = in.get();
 
    if (in.good() && (value & 0x80) )
    {
       value &= 0x7F;
 
-      register unsigned long c;
+      register unsigned int c;
       do
       {
          c = in.get();

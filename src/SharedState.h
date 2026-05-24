@@ -21,7 +21,7 @@ struct SongStatistics
       longest_combo(0), score(0) { }
 
    unsigned int notes_user_could_have_played;
-   long speed_integral;
+   int speed_integral;
 
    unsigned int notes_user_actually_played;
 

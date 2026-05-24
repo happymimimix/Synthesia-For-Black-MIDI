@@ -10,7 +10,7 @@
 
 namespace Compatible
 {
-   unsigned long GetMilliseconds()
+   unsigned int GetMilliseconds()
    {
 #ifdef WIN32
       return timeGetTime();

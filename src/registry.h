@@ -27,12 +27,12 @@ public:
    // return false. (Regardless of return value, 'out' will always be usable)
    const bool Read(const std::wstring keyName, std::wstring *out, const std::wstring defaultValue) const;
    const bool Read(const std::wstring keyName, bool *out, const bool defaultValue) const;
-   const bool Read(const std::wstring keyName, long *out, const long defaultValue) const;
+   const bool Read(const std::wstring keyName, int *out, const int defaultValue) const;
    const bool Read(const std::wstring keyName, int  *out, const int  defaultValue) const;
 
    void Write(const std::wstring keyName, const std::wstring value);
    void Write(const std::wstring keyName, const bool value);
-   void Write(const std::wstring keyName, const long value);
+   void Write(const std::wstring keyName, const int value);
    void Write(const std::wstring keyName, const int  value);
 
    void Delete(const std::wstring keyName);

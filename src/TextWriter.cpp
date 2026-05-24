@@ -158,7 +158,7 @@ void Text::calculate_position_and_advance_cursor(TextWriter &tw, int *out_x, int
 {
 #ifdef WIN32
 
-   const long options = DT_LEFT | DT_NOPREFIX;
+   const int options = DT_LEFT | DT_NOPREFIX;
 
    Context c = tw.renderer.m_context;
    int previous_map_mode = SetMapMode(c, MM_TEXT);

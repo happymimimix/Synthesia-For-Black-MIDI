@@ -72,7 +72,7 @@ private:
    SharedState m_state;
    unsigned int m_current_combo;
 
-   unsigned long m_last_delta;
+   unsigned int m_last_delta;
    uint8_t m_delay_idx;
    HANDLE m_framedump_handle;
    void* m_framedump_fb;

@@ -28,7 +28,7 @@ Registry::Registry(const RootKey rootKey, const wstring program, const wstring c
 
    if (good)
    {
-      long result = 0;
+      int result = 0;
       DWORD disposition;
 
       // Open the requested key
@@ -85,7 +85,7 @@ void Registry::Write(const wstring keyName, const bool value)
    RegSetValueEx(key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&val, sizeof(DWORD));
 }
 
-void Registry::Write(const wstring keyName, const long value)
+void Registry::Write(const wstring keyName, const int value)
 {
    if (!good) return;
    RegSetValueEx(key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&value, sizeof(DWORD));
@@ -104,7 +104,7 @@ const bool Registry::Read(const wstring keyName, wstring *out, const wstring def
    if (!good) return false;
 
    // Read the value once to get the size of the string
-   long result = 0;
+   int result = 0;
    DWORD size = 0;
    result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, NULL, &size);
 
@@ -136,13 +136,13 @@ const bool Registry::Read(const wstring keyName, bool *out, const bool defaultVa
    DWORD data = 0;
    DWORD dataSize = sizeof(DWORD);
 
-   const long result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
+   const int result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
    if (result == ERROR_SUCCESS) *out = !(data == 0);
 
    return (result == ERROR_SUCCESS);
 }
 
-const bool Registry::Read(const wstring keyName, long *out, const long defaultValue) const
+const bool Registry::Read(const wstring keyName, int *out, const int defaultValue) const
 {
    // Default the return value immediately
    *out = defaultValue;
@@ -151,7 +151,7 @@ const bool Registry::Read(const wstring keyName, long *out, const long defaultVa
    DWORD data = 0;
    DWORD dataSize = sizeof(DWORD);
 
-   const long result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
+   const int result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
    if (result == ERROR_SUCCESS) *out = data;
 
    return (result == ERROR_SUCCESS);
@@ -166,7 +166,7 @@ const bool Registry::Read(const wstring keyName, int *out, const int defaultValu
    DWORD data = 0;
    DWORD dataSize = sizeof(DWORD);
 
-   const long result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
+   const int result = RegQueryValueEx(key, keyName.c_str(), 0, NULL, (LPBYTE)&data, &dataSize);
    if (result == ERROR_SUCCESS) *out = (signed)data;
 
    return (result == ERROR_SUCCESS);

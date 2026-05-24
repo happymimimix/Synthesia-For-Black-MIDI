@@ -3,11 +3,7 @@
 
 #include <string>
 
-#ifdef WIN32
 typedef unsigned int TextureId;
-#else
-typedef unsigned long TextureId;
-#endif
 
 class Tga
 {

@@ -342,7 +342,7 @@ void KeyboardDisplay::DrawBeatLines(Renderer &renderer, int x_offset, int y, int
    const Color thin(Renderer::ToColor(0x50,0x50,0x50));
 
    const double scaling_factor = static_cast<double>(y_offset) / static_cast<double>(show_duration);
-   const long long roll_under = static_cast<int>(y_roll_under / scaling_factor);
+   const long long roll_under = static_cast<long long>(y_roll_under / scaling_factor);
 
    // Draw beat lines (thin)
    renderer.SetColor(thin);

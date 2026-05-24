@@ -11,13 +11,13 @@
 // Cross-platform Endian conversion functions
 //
 // MIDI is big endian.  Some platforms aren't
-unsigned long BigToSystem32(unsigned long x);
+unsigned int BigToSystem32(unsigned int x);
 unsigned short BigToSystem16(unsigned short x);
 
 // MIDI contains these wacky variable length numbers where
 // the value is stored only in the first 7 bits of each
 // byte, and the last bit is a kind of "keep going" flag.
-unsigned long parse_variable_length(std::istream &in);
+unsigned int parse_variable_length(std::istream &in);
 
 const static unsigned char InstrumentCount = 130;
 const static unsigned char InstrumentIdVarious = InstrumentCount - 1;
