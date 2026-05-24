@@ -11,6 +11,12 @@
 #include "Note.h"
 #include "MidiUtil.h"
 
+enum PulseType : unsigned char {
+   DeltaPulse,
+   AbsPulse,
+   AbsMicrosec
+};
+
 #pragma pack(push, 1)
 struct MidiEventSimple
 {
@@ -25,24 +31,26 @@ struct MidiEventSimple
 class MidiEvent
 {
 public:
-   static MidiEvent ReadFromStream(std::istream &stream, unsigned char last_status, bool contains_delta_pulses = true);
+   static MidiEvent ReadFromStream(std::istream &stream, unsigned char last_status);
    static MidiEvent Build(const MidiEventSimple &simple);
    static MidiEvent NullEvent();
 
    // NOTE: There is a VERY good chance you don't want to use this directly.
    // The only reason it's not private is because the standard containers
    // require a default constructor.
-   MidiEvent() : m_status(0), m_data1(0), m_data2(0), m_tempo_uspqn(0), m_time_sig_numerator(4), m_time_sig_denominator(4) { }
+   MidiEvent() : m_status(0), m_data1(0), m_data2(0), m_data3(0), m_pulses_type(0), m_pulses(0) { }
 
    // Returns true if the event could be expressed in a simple event.  (So, this will
    // return false for Meta and SysEx events.)
    bool GetSimpleEvent(MidiEventSimple *simple) const;
 
    MidiEventType Type() const;
-   unsigned long GetDeltaPulses() const { return m_delta_pulses; }
+   unsigned long GetDeltaPulses() const { return m_pulses_type == DeltaPulse ? *reinterpret_cast<const unsigned long*>(&m_pulses) : throw MidiError(MidiError_PulseFormatError); }
+   unsigned long long GetAbsPulses() const { return m_pulses_type == AbsPulse ? m_pulses : throw MidiError(MidiError_PulseFormatError); }
+   unsigned long long GetAbsMicrosecs() const { return m_pulses_type == AbsMicrosec ? m_pulses : throw MidiError(MidiError_PulseFormatError); }
 
    // This is generally for internal Midi library use only.
-   void SetDeltaPulses(unsigned long delta_pulses) { m_delta_pulses = delta_pulses; }
+   void SetPulses(PulseType type, unsigned long long delta_pulses) { m_pulses_type = type; if (m_pulses_type == DeltaPulse) *reinterpret_cast<unsigned long*>(&m_pulses) = static_cast<unsigned long>(delta_pulses); else m_pulses = delta_pulses; }
 
    NoteId NoteNumber() const;
 
@@ -73,8 +81,8 @@ public:
    // denominator (beat unit, e.g. 4 = quarter note).  The
    // denominator is stored already decoded from the power-of-2
    // encoding used in the MIDI file.
-   unsigned char GetTimeSignatureNumerator() const { return m_time_sig_numerator; }
-   unsigned char GetTimeSignatureDenominator() const { return m_time_sig_denominator; }
+   unsigned char GetTimeSignatureNumerator() const;
+   unsigned char GetTimeSignatureDenominator() const;
 
    // Returns which channel this event operates on.  This is
    // only defined for standard MIDI events that require a
@@ -95,12 +103,10 @@ private:
    unsigned char m_meta_type;
    unsigned char m_data1;
    unsigned char m_data2;
+   unsigned char m_data3;
 
-   unsigned long m_delta_pulses;
-   unsigned long m_tempo_uspqn;
-
-   unsigned char m_time_sig_numerator;
-   unsigned char m_time_sig_denominator;
+   unsigned char m_pulses_type;
+   unsigned long long m_pulses;
 };
 #pragma pack(pop)
 

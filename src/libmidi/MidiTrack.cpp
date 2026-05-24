@@ -82,16 +82,15 @@ MidiTrack MidiTrack::ReadFromStream(std::istream &stream)
 
    // Read events until we run out of track
    char last_status = 0;
-   unsigned long current_pulse_count = 0;
+   ticks_t current_pulse_count = 0;
    while (event_stream.peek() != EOF)
    {
       MidiEvent ev = MidiEvent::ReadFromStream(event_stream, last_status); 
       last_status = ev.StatusCode();
+      current_pulse_count += ev.GetDeltaPulses();
+      ev.SetPulses(AbsPulse, current_pulse_count);
       
       t.m_events.push_back(ev);
-
-      current_pulse_count += ev.GetDeltaPulses();
-      t.m_event_pulses.push_back(current_pulse_count);
    }
 
    t.DiscoverInstrument();
@@ -107,7 +106,7 @@ struct NoteInfo
    microseconds_t microseconds;
 };
 
-void MidiTrack::BuildNoteSet(TranslatedNoteSet* translated_notes, unsigned short pulses_per_quarter_note, unsigned short track_id, Midi* self, microseconds_t(Midi:: *PtrToGetEventPulseInMicroseconds)(unsigned long, unsigned short, size_t&) const)
+void MidiTrack::BuildNoteSet(TranslatedNoteSet* translated_notes, unsigned short pulses_per_quarter_note, unsigned short track_id)
 {
    // Keep a list of all the notes currently "on" (and the pulse that
    // it was started).  On a note_on event, we create an element.  On
@@ -139,7 +138,7 @@ void MidiTrack::BuildNoteSet(TranslatedNoteSet* translated_notes, unsigned short
          trans.channel = find_ret.channel;
          trans.velocity = find_ret.velocity;
          trans.start = find_ret.microseconds;
-         trans.end = (self->*PtrToGetEventPulseInMicroseconds)(m_event_pulses[i], pulses_per_quarter_note, tempo_hint);
+         trans.end = ev.GetAbsMicrosecs();
 
          // Add a note and remove this NoteId from the active list
          translated_notes->insert(trans);
@@ -151,7 +150,7 @@ void MidiTrack::BuildNoteSet(TranslatedNoteSet* translated_notes, unsigned short
       NoteInfo info;
       info.channel = ev.Channel();
       info.velocity = ev.NoteVelocity();
-      info.microseconds = (self->*PtrToGetEventPulseInMicroseconds)(m_event_pulses[i], pulses_per_quarter_note, tempo_hint);
+      info.microseconds = ev.GetAbsMicrosecs();
 
       m_active_notes[ev.NoteNumber()].push(info);
       }
@@ -239,7 +238,7 @@ MidiEventListRange MidiTrack::Update(microseconds_t delta_microseconds)
    m_running_microseconds += delta_microseconds;
    for (; m_last_event < m_events.size(); ++m_last_event)
    {
-      if (m_event_usecs[m_last_event] > m_running_microseconds) break;
+      if (m_events[m_last_event].GetAbsMicrosecs() > m_running_microseconds) break;
    }
    range.second = m_events.data() + m_last_event;
 

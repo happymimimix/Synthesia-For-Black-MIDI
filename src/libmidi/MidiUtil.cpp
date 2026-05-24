@@ -91,6 +91,9 @@ std::wstring MidiError::GetErrorDescription() const
    case MidiError_InvalidInputErrorBehavior:          return L"Invalid InputError value.  Choices are 'report', 'ignore', and 'use'.";
 
    case MidiError_RequestedTempoFromNonTempoEvent:    return L"Tempo data was requested from a non-tempo MIDI event.";
+   case MidiError_RequestedSignatureFromNonSignatureEvent:    return L"Time signature data was requested from a non time signature MIDI event.";
+   
+   case MidiError_PulseFormatError:                   return L"Pulse data formatting error.";
 
    default:                                           return WSTRING(L"Unknown MidiError Code (" << m_error << L").");
    }

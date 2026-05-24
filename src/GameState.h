@@ -33,7 +33,7 @@ private:
 
 class GameStateManager;
 
-enum GameKey
+enum GameKey : unsigned char
 {
    KeySpace =  0x0001,
    KeyEscape = 0x0002,
@@ -44,7 +44,7 @@ enum GameKey
    KeyEnter =  0x0040
 };
 
-enum MouseButton
+enum MouseButton : unsigned char
 {
    MouseLeft,
    MouseRight
@@ -174,8 +174,8 @@ private:
    GameState *m_current_state;
 
    unsigned long m_last_milliseconds;
-   unsigned long m_key_presses;
-   unsigned long m_last_key_presses;
+   unsigned char m_key_presses;
+   unsigned char m_last_key_presses;
 
    bool m_inside_update;
 

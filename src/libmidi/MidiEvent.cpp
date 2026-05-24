@@ -9,12 +9,11 @@
 #include "../string_util.h"
 using namespace std;
 
-MidiEvent MidiEvent::ReadFromStream(istream &stream, unsigned char last_status, bool contains_delta_pulses)
+MidiEvent MidiEvent::ReadFromStream(istream &stream, unsigned char last_status)
 {
    MidiEvent ev;
 
-   if (contains_delta_pulses) ev.m_delta_pulses = parse_variable_length(stream);
-   else ev.m_delta_pulses = 0;
+   ev.SetPulses(DeltaPulse, static_cast<unsigned long long>(parse_variable_length(stream)));
 
    // MIDI uses a compression mechanism called "running status".
    // Anytime you read a status byte that doesn't have the highest-
@@ -46,7 +45,7 @@ MidiEvent MidiEvent::Build(const MidiEventSimple &simple)
 {
    MidiEvent ev;
 
-   ev.m_delta_pulses = 0;
+   ev.m_pulses = 0;
    ev.m_status = simple.status;
    ev.m_data1 = simple.byte1;
    ev.m_data2 = simple.byte2;
@@ -58,9 +57,10 @@ MidiEvent MidiEvent::Build(const MidiEventSimple &simple)
 MidiEvent MidiEvent::NullEvent()
 {
    MidiEvent ev;
+
+   ev.m_pulses = 0;
    ev.m_status = 0xFF;
    ev.m_meta_type = MidiMetaEvent_Proprietary;
-   ev.m_delta_pulses = 0;
 
    return ev;
 }
@@ -100,27 +100,27 @@ void MidiEvent::ReadMeta(std::istream &stream)
          // We have to convert to unsigned char first for some reason or the
          // conversion gets all wacky and tries to look at more than just its
          // one byte at a time.
-         unsigned int b0 = static_cast<unsigned char>(buffer[0]);
-         unsigned int b1 = static_cast<unsigned char>(buffer[1]);
-         unsigned int b2 = static_cast<unsigned char>(buffer[2]);
-         m_tempo_uspqn = (b0 << 16) + (b1 << 8) + b2;
+         m_data1 = static_cast<unsigned char>(buffer[0]);
+         m_data2 = static_cast<unsigned char>(buffer[1]);
+         m_data3 = static_cast<unsigned char>(buffer[2]);
       }
       break;
 
 
    case MidiMetaEvent_TimeSignature:
       {
+         m_data1 = m_data2 = 4;
          // The MIDI spec requires exactly 4 bytes for this event:
          // numerator, denominator (as power of 2), MIDI clocks per
          // metronome click, and 32nd notes per quarter note.
          if (meta_length < 2 || meta_length > 4) throw MidiError(MidiError_EventTooShort);
 
-         m_time_sig_numerator = static_cast<unsigned char>(buffer[0]);
+         m_data1 = static_cast<unsigned char>(buffer[0]);
 
          // Denominator is stored as a power of 2 (0=whole, 1=half,
          // 2=quarter, 3=eighth).  We decode it right away.
          unsigned char denom_power = static_cast<unsigned char>(buffer[1]);
-         m_time_sig_denominator = static_cast<unsigned char>(1 << denom_power);
+         m_data2 = static_cast<unsigned char>(1 << denom_power);
       }
       break;
 
@@ -297,5 +297,25 @@ unsigned long MidiEvent::GetTempoInUsPerQn() const
       throw MidiError(MidiError_RequestedTempoFromNonTempoEvent);
    }
 
-   return m_tempo_uspqn;
+   return (m_data1 << 16) + (m_data2 << 8) + m_data3;
+}
+
+unsigned char MidiEvent::GetTimeSignatureNumerator() const
+{
+   if (Type() != MidiEventType_Meta || MetaType() != MidiMetaEvent_TimeSignature)
+   {
+      throw MidiError(MidiError_RequestedTempoFromNonTempoEvent);
+   }
+
+   return m_data1;
+}
+
+unsigned char MidiEvent::GetTimeSignatureDenominator() const
+{
+   if (Type() != MidiEventType_Meta || MetaType() != MidiMetaEvent_TimeSignature)
+   {
+      throw MidiError(MidiError_RequestedTempoFromNonTempoEvent);
+   }
+
+   return m_data2;
 }

@@ -56,30 +56,27 @@ public:
    const std::vector<microseconds_t> &BeatLines() const { return m_beat_lines; }
    const std::vector<microseconds_t> &BarLines() const { return m_bar_lines; }
 
-   microseconds_t(Midi:: *GetPtrToGetEventPulseInMicroseconds() const)(unsigned long, unsigned short, size_t&) const { return &Midi::GetEventPulseInMicroseconds; }
-
 private:
    const static unsigned long DefaultBPM = 120;
-   const static microseconds_t OneMinuteInMicroseconds = 60000000;
-   const static microseconds_t DefaultUSTempo = OneMinuteInMicroseconds / DefaultBPM;
+   const static unsigned long OneMinuteInMicroseconds = 60000000;
+   const static unsigned long DefaultUSTempo = OneMinuteInMicroseconds / DefaultBPM;
 
-   static microseconds_t ConvertPulsesToMicroseconds(unsigned long pulses, microseconds_t tempo, unsigned short pulses_per_quarter_note);
+   static microseconds_t ConvertPulsesToMicroseconds(unsigned long long pulses, microseconds_t tempo, unsigned short pulses_per_quarter_note);
 
    Midi(): m_initialized(false), m_microsecond_dead_start_air(0) { Reset(0, 0); }
    
    // The tempo index lets us do this in O(log n) instead of the old
    // linear scan.
-   microseconds_t GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note) const;
+   microseconds_t GetEventPulseInMicroseconds(unsigned long long event_pulses, unsigned short pulses_per_quarter_note) const;
 
    // This overload remembers where it left off between calls, so
    // converting a sorted list of pulses is essentially free after
    // the first lookup.  (The caller just has to make sure the hint
    // starts at 0 and the input pulses are non-decreasing.)
-   microseconds_t GetEventPulseInMicroseconds(unsigned long event_pulses, unsigned short pulses_per_quarter_note, size_t &hint) const;
+   microseconds_t GetEventPulseInMicroseconds(unsigned long long event_pulses, unsigned short pulses_per_quarter_note, size_t &hint) const;
 
-   unsigned long FindFirstNotePulse();
+   unsigned long long FindFirstNote();
 
-   void BuildTempoTrack();
    void BuildTempoIndex(unsigned short pulses_per_quarter_note);
    void BuildBeatLines(unsigned short pulses_per_quarter_note);
 
@@ -88,12 +85,12 @@ private:
    // These three parallel arrays cache the cumulative wall-clock time
    // at each tempo change so we don't have to recalculate from the
    // beginning every time.
-   std::vector<unsigned long>  m_tempo_pulse_marks;
+   std::vector<ticks_t>  m_tempo_pulse_marks;
    std::vector<microseconds_t> m_tempo_usec_marks;
-   std::vector<microseconds_t> m_tempo_values;
+   std::vector<unsigned long> m_tempo_values;
 
    // Time signature data collected during BuildTempoTrack.
-   std::vector<unsigned long>  m_timesig_pulse_marks;
+   std::vector<ticks_t>  m_timesig_pulse_marks;
    std::vector<unsigned char>  m_timesig_numerators;
    std::vector<unsigned char>  m_timesig_denominators;
 

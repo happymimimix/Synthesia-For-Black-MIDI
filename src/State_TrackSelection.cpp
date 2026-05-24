@@ -237,12 +237,11 @@ void TrackSelectionState::Update()
             // Find the first note in this track so we can skip right to the good part.
             microseconds_t additional_time = -PreviewLeadIn;
             const MidiTrack &track = (*m_state.midi->Tracks())[m_preview_track_id];
-            for (unsigned short i = 0; i < static_cast<unsigned short>(track.Events()->size()); ++i)
+            for (MidiEventList::const_iterator ev = track.Events()->begin(); ev != track.Events()->end(); ++ev)
             {
-               const MidiEvent &ev = (*track.Events())[i];
-               if (ev.Type() == MidiEventType_NoteOn && ev.NoteVelocity() > 0)
+               if (ev->Type() == MidiEventType_NoteOn && ev->NoteVelocity() > 0)
                {
-                  additional_time += (*track.EventUsecs())[i] - m_state.midi->GetDeadAirStartOffsetMicroseconds() - 1;
+                  additional_time += ev->GetAbsMicrosecs() - m_state.midi->GetDeadAirStartOffsetMicroseconds() - 1;
                   break;
                }
             }

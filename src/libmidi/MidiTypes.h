@@ -6,5 +6,7 @@
 #define __MIDI_TYPES_H
 
 typedef long long microseconds_t;
+typedef long long ticks_t;
+typedef long deltaticks_t;
 
 #endif

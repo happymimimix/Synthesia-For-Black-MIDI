@@ -83,17 +83,17 @@ Tga *GameStateManager::GetTexture(Texture tex_name, bool smooth) const
 
 void GameStateManager::KeyPress(GameKey key)
 {
-   m_key_presses |= static_cast<unsigned long>(key);
+   m_key_presses |= static_cast<unsigned char>(key);
 }
 
 bool GameStateManager::IsKeyPressed(GameKey key) const
 {
-   return ( (m_key_presses & static_cast<unsigned long>(key)) != 0);
+   return ( (m_key_presses & static_cast<unsigned char>(key)) != 0);
 }
 
 bool GameStateManager::IsKeyReleased(GameKey key) const
 {
-   return (!IsKeyPressed(key) && ((m_last_key_presses & static_cast<unsigned long>(key)) != 0));
+   return (!IsKeyPressed(key) && ((m_last_key_presses & static_cast<unsigned char>(key)) != 0));
 }
 
 void GameStateManager::MousePress(MouseButton button)
