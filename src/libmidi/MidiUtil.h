@@ -117,6 +117,7 @@ enum MidiMetaEventType
    // Deprecated Meta Events
    MidiMetaEvent_ChannelPrefix = 0x20,
    MidiMetaEvent_MidiPort = 0x21,
+   MidiMetaEvent_Color = 0x0A,
 
    MidiMetaEvent_Unknown = 0xFF
 };

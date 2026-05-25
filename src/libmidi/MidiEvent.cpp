@@ -132,6 +132,7 @@ void MidiEvent::ReadMeta(std::istream &stream)
 
    case MidiMetaEvent_ChannelPrefix:
    case MidiMetaEvent_MidiPort:
+   case MidiMetaEvent_Color:
       // NOTE: We would have to keep all of this around if we
       // wanted to reproduce 1:1 MIDIs between file Save/Load
       break;

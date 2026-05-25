@@ -85,7 +85,7 @@ void Registry::Write(const wstring keyName, const bool value)
    RegSetValueEx(key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&val, sizeof(DWORD));
 }
 
-void Registry::Write(const wstring keyName, const int value)
+void Registry::Write(const wstring keyName, const long value)
 {
    if (!good) return;
    RegSetValueEx(key, keyName.c_str(), 0, REG_DWORD, (LPBYTE)&value, sizeof(DWORD));
@@ -142,7 +142,7 @@ const bool Registry::Read(const wstring keyName, bool *out, const bool defaultVa
    return (result == ERROR_SUCCESS);
 }
 
-const bool Registry::Read(const wstring keyName, int *out, const int defaultValue) const
+const bool Registry::Read(const wstring keyName, long *out, const long defaultValue) const
 {
    // Default the return value immediately
    *out = defaultValue;
