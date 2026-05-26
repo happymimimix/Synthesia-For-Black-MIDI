@@ -82,6 +82,7 @@ enum MidiEventType
    MidiEventType_Meta = 0xFF,
    MidiEventType_Tempo = 0xFE,
    MidiEventType_SysEx = 0xF0,
+   MidiEventType_SysExContinue = 0xF7,
    MidiEventType_Unknown = 0xFD,
 
    MidiEventType_NoteOff = 0x80,

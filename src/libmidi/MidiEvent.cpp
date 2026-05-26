@@ -20,6 +20,23 @@ MidiEvent MidiEvent::ReadFromStream(istream &stream, unsigned char last_status)
    // order bit set, what you actually read is the 1st data byte
    // of a message with the status of the previous message.
    ev.m_status = static_cast<unsigned char>(stream.peek());
+   switch (ev.m_status) {
+      case MidiEventType_NoteOff:
+      case MidiEventType_NoteOn:
+      case MidiEventType_Aftertouch:
+      case MidiEventType_Controller:
+      case MidiEventType_ProgramChange:
+      case MidiEventType_ChannelPressure:
+      case MidiEventType_PitchWheel:
+      case MidiEventType_Meta:
+      case MidiEventType_SysEx:
+      case MidiEventType_SysExContinue:
+         break;
+      default: 
+         ev.m_status = MidiEventType_Unknown;
+         break;
+   }
+
    if ((ev.m_status & 0x80) == 0)
    {
       ev.m_status = last_status;
@@ -70,8 +87,7 @@ void MidiEvent::ReadMeta(std::istream &stream)
    stream.read(reinterpret_cast<char*>(&m_meta_type), sizeof(unsigned char));
    unsigned int meta_length = parse_variable_length(stream);
 
-   char *buffer = new char[meta_length + 1];
-   buffer[meta_length] = 0;
+   char *buffer = new char[meta_length];
 
    stream.read(buffer, meta_length);
    if (stream.fail())
@@ -135,15 +151,10 @@ void MidiEvent::ReadMeta(std::istream &stream)
    case MidiMetaEvent_ChannelPrefix:
    case MidiMetaEvent_MidiPort:
    case MidiMetaEvent_Color:
-      // NOTE: We would have to keep all of this around if we
-      // wanted to reproduce 1:1 MIDIs between file Save/Load
       break;
 
    default:
-      {
-         delete[] buffer;
-         throw MidiError(MidiError_UnknownMetaEventType);
-      }
+      m_meta_type = MidiMetaEvent_Unknown;
    }
 
    delete[] buffer;
@@ -164,30 +175,8 @@ void MidiEvent::ReadSysEx(std::istream &stream)
 
 void MidiEvent::ReadStandard(std::istream &stream)
 {
-   switch (Type())
-   {
-   case MidiEventType_NoteOff:
-   case MidiEventType_NoteOn:
-   case MidiEventType_Aftertouch:
-   case MidiEventType_Controller:
-   case MidiEventType_PitchWheel:
-      {
-         stream.read(reinterpret_cast<char*>(&m_data1), sizeof(unsigned char));
-         stream.read(reinterpret_cast<char*>(&m_data2), sizeof(unsigned char));
-      }
-      break;
-
-   case MidiEventType_ProgramChange:
-   case MidiEventType_ChannelPressure:
-      {
-         stream.read(reinterpret_cast<char*>(&m_data1), sizeof(unsigned char));
-         m_data2 = 0;
-      }
-      break;
-
-   default:
-      throw MidiError(MidiError_UnknownEventType);
-   }
+   stream.read(reinterpret_cast<char*>(&m_data1), sizeof(unsigned char));
+   if (m_status != MidiEventType_ChannelPressure) stream.read(reinterpret_cast<char*>(&m_data2), sizeof(unsigned char));
 }
 
 bool MidiEvent::GetSimpleEvent(MidiEventSimple *simple) const
@@ -204,7 +193,7 @@ bool MidiEvent::GetSimpleEvent(MidiEventSimple *simple) const
 
 MidiEventType MidiEvent::Type() const
 {
-   if (m_status != MidiEventType_Meta && m_status != MidiEventType_Tempo) return static_cast<MidiEventType>(m_status & 0xF0);
+   if (m_status != MidiEventType_Meta && m_status != MidiEventType_Tempo && m_status != MidiEventType_Unknown) return static_cast<MidiEventType>(m_status & 0xF0);
 
    if (m_status == MidiEventType_Tempo) return MidiEventType_Meta;
 
