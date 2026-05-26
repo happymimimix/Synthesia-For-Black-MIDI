@@ -215,7 +215,7 @@ MidiEventType MidiEvent::Type() const
 
 MidiMetaEventType MidiEvent::MetaType() const
 {
-   if (m_status != MidiEventType_Meta) return MidiMetaEvent_Unknown;
+   if (m_status != MidiEventType_Meta && m_status != MidiEventType_Tempo) return MidiMetaEvent_Unknown;
 
    if (m_status == MidiEventType_Tempo) return MidiMetaEvent_TempoChange;
 
