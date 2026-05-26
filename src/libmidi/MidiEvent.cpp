@@ -189,9 +189,6 @@ void MidiEvent::ReadStandard(std::istream &stream)
       }
       break;
    }
-
-   stream.read(reinterpret_cast<char*>(&m_data1), sizeof(unsigned char));
-   if ((m_status & 0xF0) != MidiEventType_ProgramChange && (m_status & 0xF0) != MidiEventType_ChannelPressure) stream.read(reinterpret_cast<char*>(&m_data2), sizeof(unsigned char));
 }
 
 bool MidiEvent::GetSimpleEvent(MidiEventSimple *simple) const
