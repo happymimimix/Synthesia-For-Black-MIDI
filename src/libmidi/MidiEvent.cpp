@@ -100,9 +100,11 @@ void MidiEvent::ReadMeta(std::istream &stream)
          // We have to convert to unsigned char first for some reason or the
          // conversion gets all wacky and tries to look at more than just its
          // one byte at a time.
-         m_data1 = static_cast<unsigned char>(buffer[0]);
-         m_data2 = static_cast<unsigned char>(buffer[1]);
-         m_data3 = static_cast<unsigned char>(buffer[2]);
+
+         m_status = MidiEventType_Tempo;
+         m_meta_type = static_cast<unsigned char>(buffer[0]);
+         m_data1 = static_cast<unsigned char>(buffer[1]);
+         m_data2 = static_cast<unsigned char>(buffer[2]);
       }
       break;
 
@@ -191,7 +193,7 @@ void MidiEvent::ReadStandard(std::istream &stream)
 bool MidiEvent::GetSimpleEvent(MidiEventSimple *simple) const
 {
    MidiEventType t = Type();
-   if (t == MidiEventType_Meta || t == MidiEventType_SysEx || t == MidiEventType_Unknown) return false;
+   if (t == MidiEventType_Meta || t == MidiEventType_Tempo || t == MidiEventType_SysEx || t == MidiEventType_Unknown) return false;
 
    simple->status = m_status;
    simple->byte1 = m_data1;
@@ -202,31 +204,18 @@ bool MidiEvent::GetSimpleEvent(MidiEventSimple *simple) const
 
 MidiEventType MidiEvent::Type() const
 {
-   if (m_status >  0xEF && m_status < 0xFF) return MidiEventType_SysEx;
-   if (m_status <  0x80) return MidiEventType_Unknown;
-   if (m_status == 0xFF) return MidiEventType_Meta;
+   if (m_status != MidiEventType_Meta && m_status != MidiEventType_Tempo) return static_cast<MidiEventType>(m_status & 0xF0);
 
-   // The 0x8_ through 0xE_ events contain channel numbers
-   // in the lowest 4 bits
-   unsigned char status_top = m_status >> 4;
+   if (m_status == MidiEventType_Tempo) return MidiEventType_Meta;
 
-   switch (status_top)
-   {
-   case 0x8: return MidiEventType_NoteOff;
-   case 0x9: return MidiEventType_NoteOn;
-   case 0xA: return MidiEventType_Aftertouch;
-   case 0xB: return MidiEventType_Controller;
-   case 0xC: return MidiEventType_ProgramChange;
-   case 0xD: return MidiEventType_ChannelPressure;
-   case 0xE: return MidiEventType_PitchWheel;
-
-   default:  return MidiEventType_Unknown;
-   }
+   return static_cast<MidiEventType>(m_status);
 }
 
 MidiMetaEventType MidiEvent::MetaType() const
 {
-   if (Type() != MidiEventType_Meta) return MidiMetaEvent_Unknown;
+   if (m_status != MidiEventType_Meta) return MidiMetaEvent_Unknown;
+
+   if (m_status == MidiEventType_Tempo) return MidiMetaEvent_TempoChange;
 
    return static_cast<MidiMetaEventType>(m_meta_type);
 }
@@ -293,12 +282,12 @@ signed char MidiEvent::NoteVelocity() const
 
 unsigned int MidiEvent::GetTempoInUsPerQn() const
 {
-   if (Type() != MidiEventType_Meta || MetaType() != MidiMetaEvent_TempoChange)
+   if (Type() != MidiEventType_Tempo)
    {
       throw MidiError(MidiError_RequestedTempoFromNonTempoEvent);
    }
 
-   return (m_data1 << 16) + (m_data2 << 8) + m_data3;
+   return (m_meta_type << 16) + (m_data1 << 8) + m_data2;
 }
 
 unsigned char MidiEvent::GetTimeSignatureNumerator() const

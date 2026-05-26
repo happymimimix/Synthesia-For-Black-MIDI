@@ -79,17 +79,18 @@ private:
 
 enum MidiEventType
 {
-   MidiEventType_Meta,
-   MidiEventType_SysEx,
-   MidiEventType_Unknown,
+   MidiEventType_Meta = 0xFF,
+   MidiEventType_Tempo = 0xFE,
+   MidiEventType_SysEx = 0xF0,
+   MidiEventType_Unknown = 0xFD,
 
-   MidiEventType_NoteOff,
-   MidiEventType_NoteOn,
-   MidiEventType_Aftertouch,
-   MidiEventType_Controller,
-   MidiEventType_ProgramChange,
-   MidiEventType_ChannelPressure,
-   MidiEventType_PitchWheel
+   MidiEventType_NoteOff = 0x80,
+   MidiEventType_NoteOn = 0x90,
+   MidiEventType_Aftertouch = 0xA0,
+   MidiEventType_Controller = 0xB0,
+   MidiEventType_ProgramChange = 0xC0,
+   MidiEventType_ChannelPressure = 0xD0,
+   MidiEventType_PitchWheel = 0xE0
 };
 
 enum MidiMetaEventType

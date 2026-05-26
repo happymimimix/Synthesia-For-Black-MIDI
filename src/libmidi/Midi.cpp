@@ -246,6 +246,7 @@ void Midi::BuildTempoIndex(unsigned short pulses_per_quarter_note)
       for (MidiEventList::const_iterator ev = t->Events()->begin(); ev != t->Events()->end(); ++ev)
       {
          if (ev->Type() != MidiEventType_Meta) continue;
+
          if (ev->MetaType() == MidiMetaEvent_TempoChange) tempo_events[ev->GetAbsPulses()] = &*ev;
          if (ev->MetaType() == MidiMetaEvent_TimeSignature) timesig_events[ev->GetAbsPulses()] = &*ev;
       }
