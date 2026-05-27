@@ -38,19 +38,19 @@ public:
    // NOTE: There is a VERY good chance you don't want to use this directly.
    // The only reason it's not private is because the standard containers
    // require a default constructor.
-   MidiEvent() : m_status(0), m_data1(0), m_data2(0), m_pulses_type(0), m_pulses(0) { }
+   MidiEvent() : m_status(0), m_data1(0), m_data2(0), m_pulses(0) { }
 
    // Returns true if the event could be expressed in a simple event.  (So, this will
    // return false for Meta and SysEx events.)
    bool GetSimpleEvent(MidiEventSimple *simple) const;
 
    MidiEventType Type() const;
-   unsigned int GetDeltaPulses() const { return m_pulses_type == DeltaPulse ? *reinterpret_cast<const unsigned int*>(&m_pulses) : throw MidiError(MidiError_PulseFormatError); }
-   unsigned long long GetAbsPulses() const { return m_pulses_type == AbsPulse ? m_pulses : throw MidiError(MidiError_PulseFormatError); }
-   unsigned long long GetAbsMicrosecs() const { return m_pulses_type == AbsMicrosec ? m_pulses : throw MidiError(MidiError_PulseFormatError); }
+   unsigned int GetDeltaPulses() const { return *reinterpret_cast<const unsigned int*>(&m_pulses); }
+   unsigned long long GetAbsPulses() const { return m_pulses; }
+   unsigned long long GetAbsMicrosecs() const { return m_pulses; }
 
    // This is generally for internal Midi library use only.
-   void SetPulses(PulseType type, unsigned long long delta_pulses) { m_pulses_type = type; if (m_pulses_type == DeltaPulse) *reinterpret_cast<unsigned int*>(&m_pulses) = static_cast<unsigned int>(delta_pulses); else m_pulses = delta_pulses; }
+   void SetPulses(PulseType type, unsigned long long delta_pulses) { if (type == DeltaPulse) *reinterpret_cast<unsigned int*>(&m_pulses) = static_cast<unsigned int>(delta_pulses); else m_pulses = delta_pulses; }
 
    NoteId NoteNumber() const;
 
@@ -103,8 +103,6 @@ private:
    unsigned char m_meta_type;
    unsigned char m_data1;
    unsigned char m_data2;
-
-   unsigned char m_pulses_type;
    unsigned long long m_pulses;
 };
 #pragma pack(pop)

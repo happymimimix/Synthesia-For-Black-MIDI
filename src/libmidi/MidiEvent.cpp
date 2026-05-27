@@ -284,7 +284,7 @@ signed char MidiEvent::NoteVelocity() const
 
 unsigned int MidiEvent::GetTempoInUsPerQn() const
 {
-   if (Type() != MidiEventType_Tempo)
+   if (Type() != MidiEventType_Meta || MetaType() != MidiMetaEvent_TempoChange)
    {
       throw MidiError(MidiError_RequestedTempoFromNonTempoEvent);
    }
