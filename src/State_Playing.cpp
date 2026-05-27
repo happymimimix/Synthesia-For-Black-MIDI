@@ -396,8 +396,12 @@ void PlayingState::Update()
             m_state.stats.speed_integral -= m_state.song_speed;
 
             m_state.stats.notes_user_actually_played--;
+
+            const_cast<TranslatedNote&>(*note).state = UserReleased;
          }
          else {
+            const_cast<TranslatedNote&>(*note).state = UserMissed;
+
             // Tell PlayingState::Listen() to not search for this note ever again.
             LookupTableMap::iterator found = m_note_lookup_map.find(&*note);
             if (found != m_note_lookup_map.end()) {
@@ -406,8 +410,6 @@ void PlayingState::Update()
             }
             else throw GameStateError("PlayingState: Lookup map has been corrupted!");
          }
-
-         const_cast<TranslatedNote&>(*note).state = UserMissed;
 
          // They missed a note, reset the combo counter.
          m_current_combo = 0;

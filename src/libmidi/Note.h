@@ -17,7 +17,8 @@ enum NoteState : unsigned char
    AutoPlayed,
    UserPlayable,
    UserHit,
-   UserMissed
+   UserMissed,
+   UserReleased
 };
 
 #pragma pack(push, 1)
