@@ -33,7 +33,7 @@ public:
    void SwapBuffers();
 
    // 0 will disable vsync, 1 will enable.  (In Windows, >1 will skip frames.)
-   void SetVSyncInterval(int interval = 0);
+   void SetVSyncInterval(int interval = 1);
 
    void SetOffset(int x, int y) { m_xoffset = x; m_yoffset = y; }
    void ResetOffset() { SetOffset(0,0); }

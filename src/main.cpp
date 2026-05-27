@@ -370,7 +370,7 @@ int main(int argc, char *argv[])
                state_manager.Update(false);
 
                Renderer renderer(dc_win);
-               renderer.SetVSyncInterval(0);
+               renderer.SetVSyncInterval(1);
                state_manager.Draw(renderer);
          }
       }
