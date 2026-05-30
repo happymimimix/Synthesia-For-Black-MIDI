@@ -153,7 +153,42 @@ void MidiTrack::BuildNoteSet(TranslatedNoteSet* translated_notes, unsigned short
          info.microseconds = ev.GetAbsMicrosecs();
          
          m_active_notes[ev.NoteNumber()].push(info);
+      } else {
+         TranslatedNote trans = {};
+
+         trans.note_id = ev.NoteNumber();
+         trans.track_id = track_id;
+         trans.channel = ev.Channel();
+         trans.velocity = ev.NoteVelocity();
+         trans.start = ev.GetAbsMicrosecs();
+         trans.end = ev.GetAbsMicrosecs();
+
+         // Add a note and remove this NoteId from the active list
+         translated_notes->insert(trans);
+
+         m_note_count++;
       }
+   }
+
+   for (uint8_t note_id = 0; ; note_id++) {
+      while (!m_active_notes[note_id].empty()){
+         NoteInfo &find_ret = m_active_notes[note_id].front();
+         TranslatedNote trans = {};
+
+         trans.note_id = note_id;
+         trans.track_id = track_id;
+         trans.channel = find_ret.channel;
+         trans.velocity = find_ret.velocity;
+         trans.start = find_ret.microseconds;
+         trans.end = find_ret.microseconds;
+
+         // Add a note and remove this NoteId from the active list
+         translated_notes->insert(trans);
+         m_active_notes[note_id].pop();
+
+         m_note_count++;
+      }
+      if (note_id == 0xFF) break;
    }
 }
 
