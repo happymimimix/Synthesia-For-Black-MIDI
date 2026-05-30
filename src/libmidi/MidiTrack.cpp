@@ -146,25 +146,14 @@ void MidiTrack::BuildNoteSet(TranslatedNoteSet* translated_notes, unsigned short
 
          m_note_count++;
       } else if (on) {
-      // Add a new active event
-      NoteInfo info;
-      info.channel = ev.Channel();
-      info.velocity = ev.NoteVelocity();
-      info.microseconds = ev.GetAbsMicrosecs();
-
-      m_active_notes[ev.NoteNumber()].push(info);
+         // Add a new active event
+         NoteInfo info;
+         info.channel = ev.Channel();
+         info.velocity = ev.NoteVelocity();
+         info.microseconds = ev.GetAbsMicrosecs();
+         
+         m_active_notes[ev.NoteNumber()].push(info);
       }
-   }
-
-   if (m_active_notes.size() > 0)
-   {
-      // LOGTODO!
-   
-      // This is mostly non-critical.
-      //
-      // Erroring out would be needlessly restrictive against
-      // promiscuous MIDI files.  As-is, a note just won't be
-      // inserted if it isn't closed properly.
    }
 }
 
