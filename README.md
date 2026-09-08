@@ -20,6 +20,6 @@ So Khangaroo and I forked Synthesia 0.6.1b and changed the keyboard range to 128
 Because SFBM uses Piegdon's original rendering pipeline and original data structures! Zenith can never defeat SFBM in terms of accuracy. 
 
 ## Why SFBM feels so much faster than original 0.6.1b?
-Besides making the keyboard range wider and producing 64bit builds, I also back ported many optimization strategies from later close sourced versions of Synthesia. 
+Besides making the keyboard range wider and producing 64bit builds, I also back ported many optimization strategies found in later close sourced versions of Synthesia. 
 
 So SFBM is basically: 0.6.1b's user interface + 0.8.3's piano keyboard rendering + 10.9's data structures + 10.9's midi parser + a few original optimization strategies. 
