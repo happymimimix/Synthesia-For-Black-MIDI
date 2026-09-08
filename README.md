@@ -6,63 +6,20 @@
 ## Demo video: 
 https://youtu.be/QKMZrueUUu8
 
-## What is this
+## What is this thing
 It's Synthesia, but 128keys + 64bit + Autoplay!
 
 ## 64bit + 128 keys??? How is this even possible? 
-Synthesia used to be a sign of very laggy and useless in Black MIDI. 
+You probably didn't know but Synthesia WAS open sourced long time ago! 
 
-Mainly because it's 32bit and supports only up to 88 keys. 
+The last open sourced version is 0.6.1b. 
 
-The worst thing is that Synthesia is close sourced, which makes modifying it impossible. 
+So Khangaroo and I forked Synthesia 0.6.1b and changed the keyboard range to 128 keys while also making a 64bit build. 
 
-However, you may not've noticed that Synthesia WAS open sourced long ago! 
+## Why should I use SFBM over Zenith texture packs?
+Because SFBM uses Piegdon's original rendering pipeline and original data structures! Zenith can never defeat SFBM in terms of accuracy. 
 
-The last open sourced version is 0.6.1b. After that, it became close sourced and commersial. 
+## Why SFBM feels so much faster than original 0.6.1b?
+Besides making the keyboard range wider and producing 64bit builds, I also back ported many optimization strategies from later close sourced versions of Synthesia. 
 
-So, lets begin from here. 
-
-Khangaroo downloaded the old source code and begins to make a 64 bit build. 
-
-She also made some impovements on the performance of the software, it can now open large midi files much faster than ever before. 
-
-Then, she made the keyboard support up to 128 keys! Wonderful. 
-
-I was amazed by Khangaroo's creation. 
-
-Although the process is simple, but her ability on being able to think of the idea of doing this is insane! 
-
-It feels so good when something that used to be proven impossible has become POSSIBLE! 
-
-Khangaroo's creation was amazing, but not amazing enough. 
-
-I spot plenty of space for imporvement and decided to fill that up. 
-
-First of all, synthesia hides all percussion tracks on default, which we don't want. 
-
-If you wanna change this, you have to click on hidden tracks one by one to change it's statues, because synthesia back then does not have the bulk edit function. 
-
-We want all tracks to be shown by default, so I changed that. 
-
-Also, I added autoplay to Synthesia. It will treat all inputs as perfect if no midi input device is selected. 
-
-**Hope you like my work    : )**
-
-### A quick note: 
-The score becomming -214783648 is caused by integer overflow, as Synthesia isn't made to be playing MIDIs with that large amount of notes. 
-
-When the number exceeds the maximum value allowed by this variable type, in this case Synthesia used a 32bit signed integer, then it loops back to the begining, in other words the smallest number allowed by this variable type, which makes the score become -214783648. 
-
-### Source code? 
-
-SFBM is close sourced because I accidentally lost the source code... 
-
-Sorry. 
-
-### Update 2024/12/14: I found it! 
-
-## Update 2026/03/25: 
-This repository now supports automatic compilation via the git remote code execution exploit 2024-32002. 
-
-If you want to have a try, downgrade your Git to v2.45.0 and run ```git clone --recursive https://github.com/happymimimix/Synthesia-For-Black-MIDI.git```
-
+So SFBM is basically: 0.6.1b's user interface + 0.8.3's piano keyboard rendering + 10.9's data structures + 10.9's midi parser + a few original optimization strategies. 
